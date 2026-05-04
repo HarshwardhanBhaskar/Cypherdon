@@ -44,3 +44,18 @@ cypherdon:
     secret: ${INTERNAL_SERVICE_KEY:cypherdon_internal_123}
   fastapi:
     url: ${FASTAPI_URL:http://localhost:8000}
+
+# Resilience4j Circuit Breaker and Retry Configuration
+resilience4j.circuitbreaker:
+  instances:
+    aiEngine:
+      slidingWindowSize: 10
+      failureRateThreshold: 50
+      waitDurationInOpenState: 15s
+      permittedNumberOfCallsInHalfOpenState: 3
+
+resilience4j.retry:
+  instances:
+    aiEngine:
+      maxAttempts: 3
+      waitDuration: 2s
