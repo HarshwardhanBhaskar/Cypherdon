@@ -35,8 +35,9 @@ public class EmailQueueController {
 
             return ResponseEntity.ok(task);
 
+        } catch (EmailQueueService.DuplicateEmailException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (EmailQueueService.RateLimitExceededException e) {
-            // Return proper HTTP 429 Too Many Requests
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

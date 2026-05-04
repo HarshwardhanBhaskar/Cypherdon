@@ -10,10 +10,12 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "email_tasks", indexes = {
-    // Index for the worker query: WHERE status = ? AND scheduled_at <= ? ORDER BY scheduled_at
+    // Worker query: WHERE status = 'PENDING' AND scheduled_at <= NOW()
     @Index(name = "idx_email_task_status_scheduled", columnList = "status, scheduled_at"),
-    // Index for the rate-limit query: WHERE user_id = ? AND created_at >= ?
-    @Index(name = "idx_email_task_user_created", columnList = "user_id, created_at")
+    // Rate-limit query: WHERE user_id = ? AND created_at >= ?
+    @Index(name = "idx_email_task_user_created", columnList = "user_id, created_at"),
+    // Duplicate-prevention: unique constraint on idempotency key
+    @Index(name = "idx_email_task_idempotency", columnList = "idempotency_key", unique = true)
 })
 public class EmailTask {
 
@@ -37,20 +39,35 @@ public class EmailTask {
     private String resumeUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, length = 12)
     private EmailStatus status = EmailStatus.PENDING;
 
     @Column(name = "retry_count")
     private int retryCount = 0;
 
     @Column(name = "error_message")
-    private String errorMessage; // Captures the last failure reason
+    private String errorMessage;
 
     @Column(name = "scheduled_at", nullable = false)
     private LocalDateTime scheduledAt;
 
     @Column(name = "sent_at")
-    private LocalDateTime sentAt; // Track when email was actually sent
+    private LocalDateTime sentAt;
+
+    /**
+     * Prevents duplicate email sends. Generated from:
+     * SHA256(userId + recipientEmail + subject + date)
+     * Two identical requests on the same day will be rejected.
+     */
+    @Column(name = "idempotency_key", unique = true, length = 64)
+    private String idempotencyKey;
+
+    /**
+     * Timestamp when a worker claimed this task.
+     * Used to detect stuck tasks (processing > 5 min = stale).
+     */
+    @Column(name = "claimed_at")
+    private LocalDateTime claimedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

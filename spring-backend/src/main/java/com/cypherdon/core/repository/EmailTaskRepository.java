@@ -16,29 +16,59 @@ import java.util.UUID;
 public interface EmailTaskRepository extends JpaRepository<EmailTask, UUID> {
 
     /**
-     * Fetches tasks ready to process, ordered by scheduled_at.
-     * Uses the composite index (status, scheduled_at).
+     * CORE QUEUE QUERY — Atomic claim with row-level locking.
+     *
+     * FOR UPDATE  → locks the selected rows so no other worker can grab them
+     * SKIP LOCKED → if another worker already locked a row, skip it instead of waiting
+     *
+     * This eliminates duplicate processing across multiple worker instances.
+     * Uses composite index (status, scheduled_at).
      */
-    @Query("SELECT e FROM EmailTask e WHERE e.status = :status AND e.scheduledAt <= :now ORDER BY e.scheduledAt ASC")
-    List<EmailTask> findTasksToProcess(EmailStatus status, LocalDateTime now, Pageable pageable);
+    @Query(value = "SELECT * FROM email_tasks " +
+            "WHERE status = 'PENDING' AND scheduled_at <= :now " +
+            "ORDER BY scheduled_at ASC " +
+            "LIMIT :batchSize " +
+            "FOR UPDATE SKIP LOCKED",
+            nativeQuery = true)
+    List<EmailTask> claimNextBatch(LocalDateTime now, int batchSize);
 
     /**
      * Rate-limit check: counts emails queued today by a user.
-     * Uses the composite index (user_id, created_at).
+     * Uses composite index (user_id, created_at).
      */
     @Query("SELECT COUNT(e) FROM EmailTask e WHERE e.userId = :userId AND e.createdAt >= :startOfDay")
     long countEmailsSentToday(UUID userId, LocalDateTime startOfDay);
 
     /**
-     * Batch-update status for multiple tasks in a single round-trip.
-     * Avoids N individual save() calls for bulk operations.
+     * Batch transition: PENDING → PROCESSING (atomic claim).
      */
     @Modifying
-    @Query("UPDATE EmailTask e SET e.status = :status, e.sentAt = :now WHERE e.id IN :ids")
-    int batchUpdateStatus(List<UUID> ids, EmailStatus status, LocalDateTime now);
+    @Query("UPDATE EmailTask e SET e.status = 'PROCESSING', e.claimedAt = :now WHERE e.id IN :ids AND e.status = 'PENDING'")
+    int claimTasks(List<UUID> ids, LocalDateTime now);
 
     /**
-     * Count tasks by status for monitoring/dashboard.
+     * Batch transition: PROCESSING → SENT.
+     */
+    @Modifying
+    @Query("UPDATE EmailTask e SET e.status = 'SENT', e.sentAt = :now, e.errorMessage = null WHERE e.id IN :ids")
+    int markSent(List<UUID> ids, LocalDateTime now);
+
+    /**
+     * Recovery: find tasks stuck in PROCESSING for too long (worker crashed).
+     * Reset them to PENDING so they can be re-claimed.
+     */
+    @Modifying
+    @Query("UPDATE EmailTask e SET e.status = 'PENDING', e.claimedAt = null " +
+            "WHERE e.status = 'PROCESSING' AND e.claimedAt < :staleCutoff")
+    int recoverStaleTasks(LocalDateTime staleCutoff);
+
+    /**
+     * Count tasks by status for monitoring dashboard.
      */
     long countByStatus(EmailStatus status);
+
+    /**
+     * Check if an idempotency key already exists (duplicate prevention).
+     */
+    boolean existsByIdempotencyKey(String idempotencyKey);
 }
