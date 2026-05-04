@@ -5,6 +5,7 @@ import uvicorn
 import logging
 from datetime import datetime
 from routers import auth, jobs, applications, resume, profile, matching, emails
+from prometheus_fastapi_instrumentator import Instrumentator
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,6 +39,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Instrument FastAPI with Prometheus metrics
+Instrumentator().instrument(app).expose(app)
 
 # Register routers
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])

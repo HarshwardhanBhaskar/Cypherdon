@@ -4,6 +4,8 @@ import com.cypherdon.core.model.EmailStatus;
 import com.cypherdon.core.model.EmailTask;
 import com.cypherdon.core.repository.EmailTaskRepository;
 import com.cypherdon.core.service.SmtpSenderService;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,18 @@ public class EmailWorker {
 
     @Autowired
     private SmtpSenderService smtpSenderService;
+
+    private final Counter emailSuccessCounter;
+    private final Counter emailFailureCounter;
+
+    public EmailWorker(MeterRegistry meterRegistry, EmailTaskRepository emailTaskRepository) {
+        this.emailSuccessCounter = meterRegistry.counter("email.send.success");
+        this.emailFailureCounter = meterRegistry.counter("email.send.failed");
+        
+        // Gauge for monitoring current queue size
+        meterRegistry.gauge("email.queue.size", emailTaskRepository, 
+            repo -> repo.countByStatus(EmailStatus.PENDING));
+    }
 
     /**
      * MAIN WORKER — runs every 30 seconds.
@@ -104,9 +118,11 @@ public class EmailWorker {
             task.setErrorMessage(null);
             emailTaskRepository.save(task);
 
+            emailSuccessCounter.increment();
             logger.info("✅ Delivered to {}", task.getRecipientEmail());
 
         } catch (Exception e) {
+            emailFailureCounter.increment();
             logger.error("❌ Failed for {}: {}", task.getRecipientEmail(), e.getMessage());
 
             int retries = task.getRetryCount() + 1;

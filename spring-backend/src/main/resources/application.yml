@@ -45,6 +45,16 @@ cypherdon:
   fastapi:
     url: ${FASTAPI_URL:http://localhost:8000}
 
+# Observability - Expose Prometheus Metrics
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 # Resilience4j Circuit Breaker and Retry Configuration
 resilience4j.circuitbreaker:
   instances:
