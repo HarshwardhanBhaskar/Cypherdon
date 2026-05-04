@@ -1,14 +1,11 @@
 """
-Resume Router
---------------
-Handles resume upload, PDF text extraction, and ATS analysis.
+Resume Router — Async Pipeline.
+PDF parsing runs in a thread pool, scoring is synchronous (fast CPU work).
 """
-import io
 import logging
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from typing import List, Optional
 
-logger = logging.getLogger("api")
+logger = logging.getLogger("api.resume")
 
 router = APIRouter()
 
@@ -19,8 +16,8 @@ async def analyze_resume_endpoint(
     target_role: str = Form(default="software engineer"),
 ):
     """
-    Accepts a PDF resume file and a target job role.
-    Returns ATS score, missing skills, and suggestions.
+    Accepts a PDF resume and target role.
+    Returns ATS score, missing skills, and improvement suggestions.
     """
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
@@ -31,15 +28,17 @@ async def analyze_resume_endpoint(
         from services.resume.suggestions import generate_suggestions
 
         contents = await file.read()
-        
-        # 1. Parse PDF
-        text = extract_text_from_pdf(contents)
 
-        # 2. Score Resume
+        # 1. Parse PDF (async — runs in thread pool, doesn't block event loop)
+        text = await extract_text_from_pdf(contents)
+
+        # 2. Score Resume (sync — pure CPU, microseconds)
         score, missing_keywords, metrics = analyze_resume_text(text, target_role)
 
-        # 3. Generate Suggestions
+        # 3. Generate Suggestions (sync — pure CPU)
         suggestions = generate_suggestions(missing_keywords, metrics)
+
+        logger.info("Resume analyzed for '%s' role — score: %d/100", target_role, score)
 
         return {
             "score": score,
@@ -51,5 +50,5 @@ async def analyze_resume_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Resume analysis failed: {e}")
+        logger.error("Resume analysis failed: %s", str(e))
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
