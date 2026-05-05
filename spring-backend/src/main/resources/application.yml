@@ -7,8 +7,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${SMTP_USERNAME:yashth12coc@gmail.com}
-    password: ${SMTP_PASSWORD:YOUR_16_DIGIT_APP_PASSWORD_HERE}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
     properties:
       mail:
         smtp:
@@ -16,9 +16,9 @@ spring:
           starttls:
             enable: true
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres}
-    username: ${DATABASE_USERNAME:postgres.oanjytlckveeuyyaslpr}
-    password: ${DATABASE_PASSWORD:Harsh@wardhan987}
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 25
@@ -36,7 +36,7 @@ spring:
 
 # JWT Configuration for Supabase Auth
 jwt:
-  secret: ${JWT_SECRET:c3XNOpcFsRGr1r4ROJjtq3MFrEknGqI0EGYjFvb7H+shWqxjLdRYvclNgEtP6jHLRlIxdo2CZpdyqQPAtmXBNw==}
+  secret: ${JWT_SECRET}
 
 # Internal service-to-service authentication
 cypherdon:
