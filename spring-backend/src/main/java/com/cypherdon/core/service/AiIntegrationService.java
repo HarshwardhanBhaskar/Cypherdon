@@ -59,4 +59,36 @@ public class AiIntegrationService {
         logger.error("AI Engine Circuit Breaker Open / Retries Exhausted: {}", t.getMessage());
         return Mono.just("{\"score\": 0, \"error\": \"AI Engine is currently overloaded or unavailable. Circuit breaker activated.\", \"missing_skills\": [], \"suggestions\": []}");
     }
+
+    @CircuitBreaker(name = "aiEngine", fallbackMethod = "fallbackUpload")
+    @Retry(name = "aiEngine")
+    public Mono<String> uploadResumeAsync(MultipartFile file, String userId) {
+        try {
+            MultipartBodyBuilder builder = new MultipartBodyBuilder();
+            builder.part("file", new ByteArrayResource(file.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return file.getOriginalFilename() != null ? file.getOriginalFilename() : "resume.pdf";
+                }
+            });
+            builder.part("user_id", userId);
+
+            logger.info("Forwarding resume upload to FastAPI for user {}...", userId);
+
+            return webClient.post()
+                    .uri("/api/upload-resume")
+                    .header("X-Internal-Secret", System.getenv().getOrDefault("INTERNAL_SERVICE_KEY", "cypherdon_internal_123"))
+                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .retrieve()
+                    .bodyToMono(String.class);
+
+        } catch (IOException e) {
+            return Mono.error(new RuntimeException("Failed to read uploaded file", e));
+        }
+    }
+
+    public Mono<String> fallbackUpload(MultipartFile file, String userId, Throwable t) {
+        logger.error("Upload Circuit Breaker Open: {}", t.getMessage());
+        return Mono.just("{\"error\": \"Upload service is currently overloaded. Please try again later.\"}");
+    }
 }
