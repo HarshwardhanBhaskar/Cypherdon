@@ -1,7 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends, Header, HTTPException
-from typing import Optional
 from services.cloudinary_service import upload_resume
-from security import verify_internal_secret # Assuming this exists or I'll just check X-Internal-Secret directly
 
 router = APIRouter()
 
