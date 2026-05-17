@@ -42,9 +42,18 @@ async def analyze_resume_endpoint(
 
         return {
             "score": score,
+            "breakdown": {
+                "skill_match": metrics.get("keyword_score", 0),
+                "keyword_presence": metrics.get("sections_score", 0),
+                "structure": metrics.get("quant_score", 0),
+            },
+            "matched_skills": [],
             "missing_skills": missing_keywords,
+            "found_keywords": [],
+            "missing_keywords": missing_keywords,
+            "found_sections": metrics.get("found_sections", []),
             "suggestions": suggestions,
-            "metrics": metrics
+            "metrics": metrics,
         }
 
     except HTTPException:

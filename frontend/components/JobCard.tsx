@@ -51,27 +51,27 @@ export default function JobCard({ job, onApply, onViewDetails, index = 0 }: JobC
     <div
       ref={cardRef}
       className={`
-        relative rounded-2xl border border-white/[0.07] bg-white/[0.025] backdrop-blur-md
+        relative rounded-[1.75rem] border border-white/[0.07] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] backdrop-blur-md
         p-6 cursor-pointer group overflow-hidden
         transition-all duration-400 ease-out
-        hover:-translate-y-1.5 hover:border-purple-500/25
-        hover:shadow-[0_12px_40px_rgba(124,58,237,0.10),0_4px_16px_rgba(0,0,0,0.25)]
-        hover:bg-white/[0.04]
+        hover:-translate-y-1.5 hover:border-sky-500/25
+        hover:shadow-[0_12px_40px_rgba(56,189,248,0.10),0_4px_16px_rgba(0,0,0,0.25)]
+        hover:bg-white/[0.045]
         ${isVisible ? 'animate-fade-in-up opacity-100' : 'opacity-0 translate-y-8'}
       `}
       style={{ animationDelay: `${(index % 3) * 0.07}s`, animationFillMode: "both" }}
       onClick={() => onViewDetails(job)}
     >
       {/* Hover glow accent */}
-      <div className="absolute -top-16 -right-16 w-40 h-40 bg-purple-500/8 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      <div className="absolute -top-16 -right-16 w-40 h-40 bg-sky-500/8 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
       {/* Header */}
       <div className="flex items-start justify-between mb-3.5 relative">
         <div className="flex-1 min-w-0 mr-4">
-          <h3 className="text-[15px] font-bold text-white group-hover:text-purple-300 transition-colors duration-300 truncate leading-tight">
+          <h3 className="text-[15px] font-bold text-white group-hover:text-sky-300 transition-colors duration-300 truncate leading-tight">
             {job.job_title}
           </h3>
-          <p className="text-sm text-blue-400/80 font-medium mt-1">
+          <p className="text-sm text-sky-300/85 font-medium mt-1">
             {job.company_name || "Unknown Company"}
           </p>
         </div>
@@ -101,10 +101,10 @@ export default function JobCard({ job, onApply, onViewDetails, index = 0 }: JobC
         <button
           className="
             flex-1 py-2.5 px-4 text-xs font-semibold text-white rounded-xl
-            bg-gradient-to-r from-purple-600/90 via-violet-600/90 to-blue-600/90
-            shadow-md shadow-purple-500/10
+            bg-gradient-to-r from-sky-500/90 via-indigo-500/90 to-blue-600/90
+            shadow-md shadow-sky-500/10
             transition-all duration-300
-            hover:shadow-lg hover:shadow-purple-500/20 hover:brightness-110
+            hover:shadow-lg hover:shadow-sky-500/20 hover:brightness-110
             active:scale-[0.97]
             border-none cursor-pointer
           "
@@ -117,7 +117,7 @@ export default function JobCard({ job, onApply, onViewDetails, index = 0 }: JobC
             py-2.5 px-4 text-xs font-semibold text-slate-300 rounded-xl
             border border-white/10 bg-white/[0.03]
             transition-all duration-300
-            hover:bg-white/[0.06] hover:border-white/20 hover:text-white
+            hover:bg-white/[0.06] hover:border-sky-500/20 hover:text-white
             active:scale-[0.97]
             cursor-pointer
           "

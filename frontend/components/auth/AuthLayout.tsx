@@ -8,63 +8,52 @@ interface AuthLayoutProps {
   backgroundImage?: string;
 }
 
-/**
- * Split-screen auth layout:
- *   LEFT  → Background image with overlay + blur
- *   RIGHT → Auth card centered vertically
- * On mobile, the background becomes full-screen behind the card.
- */
 export default function AuthLayout({
   children,
   backgroundImage = "/auth-bg-1.png",
 }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-screen w-full bg-[#06060e]">
-      {/* ───── Left Panel: Background Image ───── */}
-      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
-        {/* Image */}
+    <div className="flex min-h-screen w-full bg-[#eef4ff]">
+      <div className="hidden lg:flex lg:w-[56%] relative overflow-hidden">
         <Image
           src={backgroundImage}
-          alt="Cypherdon AI Background"
+          alt="Cypherdon background"
           fill
           className="object-cover"
           priority
           quality={90}
         />
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#06060e]/40 via-transparent to-[#06060e]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06060e]/60 via-transparent to-[#06060e]/30" />
+        <div className="absolute inset-0 bg-white/12" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-[#f7fbff]/72" />
 
-        {/* Branding on top */}
         <div className="absolute bottom-12 left-12 z-10 max-w-sm">
-          <h2 className="text-3xl font-bold text-white mb-3 leading-tight">
-            Your AI-Powered <br />
-            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              Career Assistant
-            </span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-white/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 backdrop-blur-md">
+            Smart Career Engine
+          </div>
+          <h2 className="mt-5 text-4xl font-bold text-slate-900 mb-3 leading-tight">
+            Bring clarity to every
+            <br />
+            application.
           </h2>
-          <p className="text-sm text-slate-300 leading-relaxed">
-            Smart job scraping, intelligent matching, and automated applications
-            — all with human-in-the-loop CAPTCHA handling.
+          <p className="text-sm text-slate-700/85 leading-relaxed">
+            Profiles, resume insights, job matches, and guided automation in one
+            polished workspace built for modern job seekers.
           </p>
         </div>
       </div>
 
-      {/* ───── Right Panel: Auth Card ───── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
-        {/* Mobile background (hidden on desktop) */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 relative bg-[radial-gradient(circle_at_top,_rgba(147,197,253,0.28),_transparent_42%),linear-gradient(180deg,#f8fbff_0%,#eef4ff_55%,#edf2fb_100%)]">
         <div className="lg:hidden absolute inset-0 overflow-hidden">
           <Image
             src={backgroundImage}
             alt="Background"
             fill
-            className="object-cover opacity-20 blur-sm"
+            className="object-cover opacity-35"
             priority
           />
-          <div className="absolute inset-0 bg-[#06060e]/80" />
+          <div className="absolute inset-0 bg-[#f5f9ff]/78 backdrop-blur-[3px]" />
         </div>
 
-        {/* Card container */}
         <div className="relative z-10 w-full flex items-center justify-center">
           {children}
         </div>

@@ -7,6 +7,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import AuthCard from "@/components/auth/AuthCard";
 import InputField from "@/components/auth/InputField";
 import GradientButton from "@/components/auth/GradientButton";
+import { siteImages } from "@/lib/siteImages";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,7 +37,15 @@ export default function LoginPage() {
 
       // Check if profile is already complete
       try {
-        const profileRes = await fetch(`${API_BASE}/api/auth/me/${data.user_id}`);
+        const profileRes = await fetch(`${API_BASE}/api/profile`, {
+          headers: {
+            Authorization: `Bearer ${data.access_token}`,
+          },
+        });
+        if (profileRes.status === 404) {
+          router.push("/complete-profile");
+          return;
+        }
         const profile = await profileRes.json();
         // If skills are empty, profile hasn't been completed yet
         if (!profile.skills || profile.skills.length === 0) {
@@ -58,14 +67,14 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout backgroundImage="/auth-bg-1.png">
+    <AuthLayout backgroundImage={siteImages.auth.login}>
       <AuthCard
         title="Welcome back"
         subtitle="Sign in to continue to Cypherdon"
       >
         {/* Error message */}
         {error && (
-          <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 animate-fade-in-up">
+          <div className="mb-5 rounded-xl border border-red-500/20 bg-red-50 px-4 py-3 text-sm text-red-600 animate-fade-in-up">
             {error}
           </div>
         )}
@@ -107,7 +116,7 @@ export default function LoginPage() {
           <div className="flex justify-end">
             <button
               type="button"
-              className="text-xs text-purple-400 hover:text-purple-300 transition-colors bg-transparent border-none cursor-pointer"
+              className="text-xs text-sky-600 hover:text-sky-700 transition-colors bg-transparent border-none cursor-pointer"
             >
               Forgot password?
             </button>
@@ -120,17 +129,17 @@ export default function LoginPage() {
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-white/10" />
+          <div className="flex-1 h-px bg-slate-200" />
           <span className="text-xs text-slate-500">or</span>
-          <div className="flex-1 h-px bg-white/10" />
+          <div className="flex-1 h-px bg-slate-200" />
         </div>
 
         {/* Signup link */}
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-slate-600">
           Don&apos;t have an account?{" "}
           <Link
             href="/signup"
-            className="text-purple-400 font-semibold hover:text-purple-300 transition-colors no-underline"
+            className="text-sky-600 font-semibold hover:text-sky-700 transition-colors no-underline"
           >
             Create one
           </Link>

@@ -29,10 +29,10 @@ export default function GradientButton({
       disabled={disabled || loading}
       className={`
         relative w-full rounded-xl py-3.5 px-6 text-sm font-semibold text-white
-        bg-gradient-to-r from-purple-600 via-violet-600 to-blue-600
-        shadow-lg shadow-purple-500/20
+        bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500
+        shadow-lg shadow-indigo-500/20
         transition-all duration-300 ease-out
-        hover:shadow-xl hover:shadow-purple-500/30
+        hover:shadow-xl hover:shadow-indigo-500/30
         hover:scale-[1.02] hover:brightness-110
         active:scale-[0.98]
         disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100

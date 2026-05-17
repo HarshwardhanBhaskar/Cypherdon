@@ -42,15 +42,15 @@ export default function JobDetailModal({ job, onClose, onApply }: JobDetailModal
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(2,6,23,0.78)", backdropFilter: "blur(10px)" }}
     >
       <div
-        className="glass rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-8 animate-fade-in-up"
+        className="rounded-[2rem] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-8 animate-fade-in-up border border-white/[0.08] bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(8,13,28,0.92))] shadow-[0_28px_90px_rgba(0,0,0,0.34)] backdrop-blur-2xl"
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:text-white transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/[0.06] text-[var(--color-text-muted)] hover:text-white transition-colors"
           style={{ position: "relative", float: "right" }}
         >
           ✕
@@ -58,14 +58,14 @@ export default function JobDetailModal({ job, onClose, onApply }: JobDetailModal
 
         {/* Header */}
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] flex items-center justify-center shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center shrink-0 shadow-lg shadow-sky-500/15">
             <span className="text-white text-xl font-bold">
               {(job.company_name || "C")[0].toUpperCase()}
             </span>
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-white">{job.job_title}</h2>
-            <p className="text-[var(--color-accent)] font-medium mt-1">
+            <p className="text-sky-300 font-medium mt-1">
               {job.company_name || "Unknown Company"}
             </p>
           </div>
@@ -76,7 +76,7 @@ export default function JobDetailModal({ job, onClose, onApply }: JobDetailModal
 
         {/* Location */}
         <div className="flex items-center gap-2 mb-6">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--color-surface-2)] text-[var(--color-text-muted)] border border-[var(--color-border)]">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-white/[0.05] text-[var(--color-text-muted)] border border-white/[0.08]">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
@@ -96,7 +96,7 @@ export default function JobDetailModal({ job, onClose, onApply }: JobDetailModal
         </div>
 
         {/* Apply Section */}
-        <div className="border-t border-[var(--color-border)] pt-6">
+          <div className="border-t border-white/[0.08] pt-6">
           {applyState === "idle" && (
             <div className="flex gap-3">
               <button className="btn-primary flex-1 text-base flex justify-center items-center gap-2" onClick={handleApply}>
@@ -126,7 +126,7 @@ export default function JobDetailModal({ job, onClose, onApply }: JobDetailModal
           )}
 
           {applyState === "captcha" && (
-            <div className="glass rounded-2xl p-6 text-center">
+            <div className="rounded-2xl p-6 text-center border border-amber-500/15 bg-amber-500/[0.04]">
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>

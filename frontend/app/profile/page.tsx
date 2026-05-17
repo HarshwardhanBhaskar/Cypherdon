@@ -6,6 +6,7 @@ import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import ScoreCircle from "@/components/ScoreCircle";
 import GradientButton from "@/components/auth/GradientButton";
+import { siteImages } from "@/lib/siteImages";
 
 /* ══════════════════════════════════════════════════════════
    Types
@@ -75,6 +76,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const resumeRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   // State
   const [activeTab, setActiveTab] = useState<TabId>("profile");
@@ -111,8 +113,7 @@ export default function ProfilePage() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const SPRING_API_BASE = "http://localhost:8080";
-        const res = await fetch(`${SPRING_API_BASE}/api/profile`, {
+        const res = await fetch(`${API_BASE}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -139,7 +140,7 @@ export default function ProfilePage() {
       }
     };
     fetchProfile();
-  }, []);
+  }, [API_BASE]);
 
   // Helpers
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3500); };
@@ -154,15 +155,14 @@ export default function ProfilePage() {
     }
   };
 
-  const runAnalysis = async (file: File) => {
+  const runAnalysis = useCallback(async (file: File) => {
     setResumeFile(file);
     setAnalyzing(true);
     setAtsResult(null);
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     try {
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("skills", skills);
+      fd.append("target_role", prefRole || "software engineer");
       const res = await fetch(`${API_BASE}/api/resume/analyze`, { method: "POST", body: fd });
       if (!res.ok) throw new Error((await res.json()).detail || "Analysis failed");
       setAtsResult(await res.json());
@@ -186,7 +186,7 @@ export default function ProfilePage() {
     } finally {
       setAnalyzing(false);
     }
-  };
+  }, [API_BASE, prefRole]);
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) runAnalysis(e.target.files[0]);
@@ -199,15 +199,14 @@ export default function ProfilePage() {
     const file = e.dataTransfer.files[0];
     if (file && file.name.toLowerCase().endsWith(".pdf")) runAnalysis(file);
     else showToast("Only PDF files are accepted");
-  }, [skills]);
+  }, [runAnalysis]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const SPRING_API_BASE = "http://localhost:8080";
       const token = localStorage.getItem("token");
       if (token) {
-        await fetch(`${SPRING_API_BASE}/api/profile`, {
+        const res = await fetch(`${API_BASE}/api/profile`, {
           method: "PUT",
           headers: { 
             "Content-Type": "application/json",
@@ -224,6 +223,10 @@ export default function ProfilePage() {
             job_type: jobType, salary_expectation: salaryExp,
           }),
         });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.detail || "Failed to save profile");
+        }
       }
       setEditing(false);
       showToast("Profile saved successfully!");
@@ -246,10 +249,10 @@ export default function ProfilePage() {
 
       {/* ═══ Background ═══ */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <Image src="/auth-bg-3.png" alt="" fill className="object-cover opacity-[0.06]" quality={50} priority />
-        <div className="absolute inset-0 bg-[#06060e]/92" />
-        <div className="absolute top-0 left-1/3 w-[700px] h-[400px] bg-gradient-to-br from-purple-600/[0.06] via-blue-600/[0.03] to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-to-tl from-blue-600/[0.04] to-transparent rounded-full blur-3xl" />
+        <Image src={siteImages.app.profile} alt="" fill className="object-cover opacity-[0.16]" quality={70} priority />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,18,0.82)_0%,rgba(6,6,14,0.92)_55%,rgba(6,6,14,0.98)_100%)]" />
+        <div className="absolute top-0 left-1/3 w-[700px] h-[400px] bg-gradient-to-br from-sky-500/[0.07] via-indigo-500/[0.04] to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[300px] bg-gradient-to-tl from-blue-600/[0.05] to-transparent rounded-full blur-3xl" />
       </div>
 
       {/* ═══ Toast ═══ */}
@@ -262,14 +265,14 @@ export default function ProfilePage() {
 
       <main className="relative z-10 min-h-screen pt-24 pb-20 px-6 max-w-6xl mx-auto">
         {/* ═══ TABS ═══ */}
-        <div className="flex items-center gap-1 mb-8 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-md w-fit animate-fade-in-up">
+        <div className="flex items-center gap-1 mb-8 p-1 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-md w-fit animate-fade-in-up shadow-[0_16px_40px_rgba(0,0,0,0.18)]">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer border-none ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-r from-purple-600/20 to-blue-600/15 text-white shadow-inner shadow-purple-500/10 border border-purple-500/20"
+                  ? "bg-gradient-to-r from-sky-500/20 to-indigo-500/15 text-white shadow-inner shadow-sky-500/10 border border-sky-500/20"
                   : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.03] bg-transparent"
               }`}
             >
@@ -284,14 +287,14 @@ export default function ProfilePage() {
 
           {/* ════════ LEFT: PROFILE CARD ════════ */}
           <div className="lg:col-span-4 xl:col-span-3 space-y-6">
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-7 text-center relative overflow-hidden group hover:border-purple-500/20 transition-all duration-500 animate-fade-in-up">
+            <div className="rounded-[2rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] backdrop-blur-xl p-7 text-center relative overflow-hidden group hover:border-sky-500/20 transition-all duration-500 animate-fade-in-up shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
               {/* Glass highlight */}
-              <div className="absolute -top-20 -right-20 w-52 h-52 bg-purple-500/[0.05] rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <div className="absolute -top-20 -right-20 w-52 h-52 bg-sky-500/[0.05] rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
               {/* ── Avatar with glow ── */}
               <div className="relative mx-auto w-[104px] h-[104px] mb-4">
                 {/* Glow ring */}
-                <div className="absolute inset-[-6px] rounded-full bg-gradient-to-br from-purple-500/40 via-blue-500/30 to-purple-600/40 blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" style={{ animationDuration: "3s" }} />
+                <div className="absolute inset-[-6px] rounded-full bg-gradient-to-br from-sky-500/40 via-indigo-500/30 to-blue-600/40 blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500 animate-pulse" style={{ animationDuration: "3s" }} />
                 {/* Avatar */}
                 <div
                   className="relative w-[104px] h-[104px] rounded-full overflow-hidden border-[3px] border-purple-500/30 cursor-pointer z-10"
@@ -300,7 +303,7 @@ export default function ProfilePage() {
                   {avatarPreview ? (
                     <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500 via-violet-500 to-blue-500 flex items-center justify-center text-2xl font-bold text-white">
+                    <div className="w-full h-full bg-gradient-to-br from-sky-500 via-indigo-500 to-blue-600 flex items-center justify-center text-2xl font-bold text-white">
                       {initials}
                     </div>
                   )}
@@ -318,7 +321,7 @@ export default function ProfilePage() {
 
               <h2 className="text-lg font-bold text-white">{fullName}</h2>
               <p className="text-xs text-slate-500 mt-0.5">{email}</p>
-              <div className="mt-2.5 inline-flex items-center px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-400 font-semibold uppercase tracking-wide">
+              <div className="mt-2.5 inline-flex items-center px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-[11px] text-sky-300 font-semibold uppercase tracking-wide">
                 {expLabel}
               </div>
 
@@ -334,7 +337,7 @@ export default function ProfilePage() {
                 <p className="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-2">Skills</p>
                 <div className="flex flex-wrap justify-center gap-1.5">
                   {skills.split(",").map((s) => s.trim()).filter(Boolean).map((skill, i) => (
-                    <span key={i} className="px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/15 text-[10px] font-medium text-purple-300">
+                    <span key={i} className="px-2.5 py-1 rounded-md bg-sky-500/10 border border-sky-500/15 text-[10px] font-medium text-sky-300">
                       {skill}
                     </span>
                   ))}
@@ -344,7 +347,7 @@ export default function ProfilePage() {
               {/* Edit button */}
               <button
                 onClick={() => { setEditing(true); setActiveTab("profile"); }}
-                className="mt-5 w-full py-2.5 text-xs font-semibold text-purple-400 border border-purple-500/25 hover:border-purple-500/50 hover:bg-purple-500/5 rounded-xl bg-transparent transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-purple-500/5"
+                className="mt-5 w-full py-2.5 text-xs font-semibold text-sky-300 border border-sky-500/25 hover:border-sky-500/50 hover:bg-sky-500/8 rounded-xl bg-transparent transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-sky-500/5"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline mr-1"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
                 Edit Profile
@@ -781,7 +784,7 @@ function EditInput({ value, onChange, type = "text", placeholder }: { value: str
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition-all duration-300 focus:border-purple-500/50 focus:shadow-[0_0_24px_rgba(124,58,237,0.08)] focus:bg-white/[0.06] placeholder-slate-600"
+      className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none transition-all duration-300 focus:border-sky-500/50 focus:shadow-[0_0_24px_rgba(56,189,248,0.08)] focus:bg-white/[0.06] placeholder-slate-600"
     />
   );
 }
@@ -791,7 +794,7 @@ function ToggleSwitch({ defaultOn = false }: { defaultOn?: boolean }) {
   return (
     <button
       onClick={() => setOn(!on)}
-      className={`relative w-11 h-6 rounded-full transition-colors duration-300 border-none cursor-pointer ${on ? "bg-purple-600" : "bg-white/10"}`}
+      className={`relative w-11 h-6 rounded-full transition-colors duration-300 border-none cursor-pointer ${on ? "bg-sky-500" : "bg-white/10"}`}
     >
       <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-300 ${on ? "translate-x-[22px]" : "translate-x-0.5"}`} />
     </button>

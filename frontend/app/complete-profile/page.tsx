@@ -6,6 +6,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import AuthCard from "@/components/auth/AuthCard";
 import InputField from "@/components/auth/InputField";
 import GradientButton from "@/components/auth/GradientButton";
+import { siteImages } from "@/lib/siteImages";
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -30,9 +31,9 @@ export default function CompleteProfilePage() {
     setError("");
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const userId = localStorage.getItem("user_id");
+    const token = localStorage.getItem("token");
 
-    if (!userId) {
+    if (!token) {
       setError("Session expired. Please log in again.");
       setLoading(false);
       return;
@@ -42,14 +43,13 @@ export default function CompleteProfilePage() {
       // TODO: In production, upload resumeFile to Cloudinary first and get URL
       const resumeUrl = resumeFile ? `https://res.cloudinary.com/demo/raw/upload/${resumeFile.name}` : null;
 
-      const res = await fetch(`${API_BASE}/api/auth/profile`, {
+      const res = await fetch(`${API_BASE}/api/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_id: userId,
           phone,
           skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
           experience_level: experience,
@@ -69,13 +69,13 @@ export default function CompleteProfilePage() {
   };
 
   return (
-    <AuthLayout backgroundImage="/auth-bg-2.png">
+    <AuthLayout backgroundImage={siteImages.auth.completeProfile}>
       <AuthCard
         title="Complete your profile"
         subtitle="Help us match you with the right jobs"
       >
         {error && (
-          <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 animate-fade-in-up">
+          <div className="mb-5 rounded-xl border border-red-500/20 bg-red-50 px-4 py-3 text-sm text-red-600 animate-fade-in-up">
             {error}
           </div>
         )}
@@ -112,24 +112,24 @@ export default function CompleteProfilePage() {
 
           {/* Experience Level */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <label className="block text-xs font-semibold uppercase tracking-widest text-slate-500">
               Experience Level
             </label>
             <select
               value={experience}
               onChange={(e) => setExperience(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition-all duration-300 focus:border-purple-500/60 focus:bg-white/[0.07] focus:shadow-[0_0_20px_rgba(124,58,237,0.15)] focus:ring-1 focus:ring-purple-500/30 appearance-none cursor-pointer"
+              className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-900 outline-none transition-all duration-300 focus:border-sky-500/60 focus:bg-white focus:shadow-[0_0_20px_rgba(59,130,246,0.12)] focus:ring-1 focus:ring-sky-500/20 appearance-none cursor-pointer"
             >
-              <option value="entry" className="bg-[#12121a]">Entry Level (0-2 years)</option>
-              <option value="mid" className="bg-[#12121a]">Mid Level (2-5 years)</option>
-              <option value="senior" className="bg-[#12121a]">Senior (5-8 years)</option>
-              <option value="lead" className="bg-[#12121a]">Lead / Manager (8+ years)</option>
+              <option value="entry">Entry Level (0-2 years)</option>
+              <option value="mid">Mid Level (2-5 years)</option>
+              <option value="senior">Senior (5-8 years)</option>
+              <option value="lead">Lead / Manager (8+ years)</option>
             </select>
           </div>
 
           {/* Resume Upload */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            <label className="block text-xs font-semibold uppercase tracking-widest text-slate-500">
               Resume (PDF)
             </label>
             <div
@@ -140,7 +140,7 @@ export default function CompleteProfilePage() {
                 ${
                   resumeFile
                     ? "border-green-500/40 bg-green-500/5"
-                    : "border-white/10 bg-white/[0.03] hover:border-purple-500/40 hover:bg-white/[0.05]"
+                    : "border-slate-200 bg-white/65 hover:border-sky-400/40 hover:bg-white"
                 }
               `}
             >
@@ -167,10 +167,10 @@ export default function CompleteProfilePage() {
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-600">
                     Click to upload your resume
                   </p>
-                  <p className="text-xs text-slate-600">PDF only</p>
+                  <p className="text-xs text-slate-500">PDF only</p>
                 </div>
               )}
             </div>
@@ -184,7 +184,7 @@ export default function CompleteProfilePage() {
         {/* Skip */}
         <button
           onClick={() => router.push("/dashboard")}
-          className="w-full mt-3 py-2 text-sm text-slate-500 hover:text-slate-300 transition-colors bg-transparent border-none cursor-pointer"
+          className="w-full mt-3 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors bg-transparent border-none cursor-pointer"
         >
           Skip for now
         </button>

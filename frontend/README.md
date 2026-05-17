@@ -6,15 +6,18 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+If the frontend starts lagging badly, stop it with `Ctrl+C`, close extra browser tabs, and delete the local cache:
+
+```powershell
+Remove-Item -Recurse -Force .next
+npm run dev
+```
+
+The default dev command uses webpack and disables Next image optimization in development. This keeps the large generated PNG assets from being reprocessed on every first page load. Use `npm run dev:turbo` only if you specifically want to compare Turbopack behavior.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

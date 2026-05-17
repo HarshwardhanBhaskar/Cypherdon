@@ -30,13 +30,13 @@ export default function InputField({
     <div className="space-y-1.5">
       <label
         htmlFor={id}
-        className="block text-xs font-semibold uppercase tracking-widest text-slate-400"
+        className="block text-xs font-semibold uppercase tracking-widest text-slate-500"
       >
         {label}
       </label>
       <div className="relative">
         {icon && (
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
             {icon}
           </span>
         )}
@@ -48,12 +48,12 @@ export default function InputField({
           onChange={onChange}
           required={required}
           className={`
-            w-full rounded-xl border border-white/10 bg-white/5
-            px-4 py-3 text-sm text-white placeholder-slate-500
+            w-full rounded-xl border border-slate-200 bg-white/80
+            px-4 py-3 text-sm text-slate-900 placeholder-slate-400
             outline-none transition-all duration-300
-            focus:border-purple-500/60 focus:bg-white/[0.07]
-            focus:shadow-[0_0_20px_rgba(124,58,237,0.15)]
-            focus:ring-1 focus:ring-purple-500/30
+            focus:border-sky-500/60 focus:bg-white
+            focus:shadow-[0_0_20px_rgba(59,130,246,0.12)]
+            focus:ring-1 focus:ring-sky-500/20
             ${icon ? "pl-11" : ""}
           `}
         />
