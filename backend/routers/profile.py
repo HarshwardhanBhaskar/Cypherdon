@@ -1,10 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException
 from schemas.profile import UserProfileResponse, UserProfileUpdateRequest
-from services.profile import get_profile, update_profile, get_profile_by_email
+from services.profile import get_profile, update_profile, get_profile_by_email, check_profile_links
 from services.auth_dep import get_current_user_id
 from routers.upload import verify_service_token
 
 router = APIRouter()
+
+@router.get("/verify-links", summary="Verify developer social links active status")
+def verify_developer_links(user_id: str = Depends(get_current_user_id)):
+    """Analyze the authenticated user's portfolio, github, and linkedin links for broken status."""
+    profile = get_profile(user_id)
+    return check_profile_links(profile)
+
 
 @router.get("/", response_model=UserProfileResponse, summary="Get current user profile")
 def fetch_user_profile(user_id: str = Depends(get_current_user_id)):
