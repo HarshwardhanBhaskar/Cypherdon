@@ -1,17 +1,33 @@
-# 🤖 Cypherdon
-
-> **An Enterprise-Grade Polyglot Platform for Asynchronous Job Application & AI-Driven Email Automation.**
+<p align="center">
+  <img src="images/cypherdon_readme_banner.png" alt="Cypherdon Banner" width="100%" style="border-radius: 8px;" />
+</p>
 
 <div align="center">
+  <h1>🪐 Cypherdon</h1>
+  <p><b>An Enterprise-Grade Polyglot Platform for Asynchronous Job Application & AI-Driven Email Automation</b></p>
+  <br />
 
-[![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
-[![Telegram](https://img.shields.io/badge/Telegram_Bot-Companion-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://core.telegram.org/bots)
-
+  <a href="https://openjdk.org/">
+    <img src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java" />
+  </a>
+  <a href="https://spring.io/projects/spring-boot">
+    <img src="https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
+  </a>
+  <a href="https://python.org">
+    <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  </a>
+  <a href="https://fastapi.tiangolo.com/">
+    <img src="https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  </a>
+  <a href="https://nextjs.org/">
+    <img src="https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+  </a>
+  <a href="https://supabase.com/">
+    <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  </a>
+  <a href="https://core.telegram.org/bots">
+    <img src="https://img.shields.io/badge/Telegram_Bot-Companion-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram Bot" />
+  </a>
 </div>
 
 ---
