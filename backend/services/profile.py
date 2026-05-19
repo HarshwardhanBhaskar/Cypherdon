@@ -32,17 +32,92 @@ def update_profile(user_id: str, profile_data: UserProfileUpdateRequest) -> dict
 
     update_data = profile_data.model_dump(exclude_unset=True)
 
+    # Autofix links if they are present in update_data
+    if "github_url" in update_data and update_data["github_url"]:
+        update_data["github_url"] = autofix_link(update_data["github_url"], "github")
+    if "linkedin_url" in update_data and update_data["linkedin_url"]:
+        update_data["linkedin_url"] = autofix_link(update_data["linkedin_url"], "linkedin")
+    if "portfolio_url" in update_data and update_data["portfolio_url"]:
+        update_data["portfolio_url"] = autofix_link(update_data["portfolio_url"], "portfolio")
+
     # Execute update. In this supabase-py version, standard update returns empty data array.
     supabase.table("users").update(update_data).eq("id", user_id).execute()
 
     # Fetch and return the updated user record directly to bypass empty PostgREST representation returns
     return get_profile(user_id)
 
-
+import re
+from urllib.parse import urlparse, urlunparse
 import httpx
 import logging
 
 logger = logging.getLogger(__name__)
+
+def autofix_link(url: str, platform: str) -> str:
+    """
+    Cleans, normalizes and repairs common typos/missing parts of profile URLs.
+    Supports 'github', 'linkedin', and general 'portfolio' links.
+    """
+    if not url:
+        return url
+        
+    url = url.strip()
+    platform = platform.lower()
+    
+    # If it is a simple handle/username (no dots, no slashes)
+    if "." not in url and "/" not in url and "\\" not in url:
+        if platform == "github":
+            return f"https://github.com/{url}"
+        elif platform == "linkedin":
+            return f"https://linkedin.com/in/{url}"
+        # For portfolio/other, a simple username can't be resolved, but keep it
+        return url
+
+    # Replace backslashes with standard forward slashes
+    url = url.replace("\\", "/")
+
+    # Standardize protocol domain-level typos first
+    if platform == "github":
+        url = re.sub(r'(?i)git-hub', 'github', url)
+        url = re.sub(r'(?i)githb', 'github', url)
+        url = re.sub(r'(?i)githup', 'github', url)
+        url = re.sub(r'(?i)github\.co(?![\w\.])', 'github.com', url)
+        url = re.sub(r'(?i)github\.con', 'github.com', url)
+    elif platform == "linkedin":
+        url = re.sub(r'(?i)linkdin', 'linkedin', url)
+        url = re.sub(r'(?i)linked-in', 'linkedin', url)
+        url = re.sub(r'(?i)linkedin\.co(?![\w\.])', 'linkedin.com', url)
+        url = re.sub(r'(?i)linkedin\.con', 'linkedin.com', url)
+
+    # Force HTTPS protocol
+    if not (url.lower().startswith("http://") or url.lower().startswith("https://")):
+        url = "https://" + url
+    elif url.lower().startswith("http://"):
+        url = "https://" + url[7:]
+
+    # Enforce path structures
+    if platform == "linkedin":
+        try:
+            parsed = urlparse(url)
+            netloc = parsed.netloc.lower()
+            path = parsed.path
+            
+            if "linkedin.com" in netloc:
+                # Split path by slashes and filter out empty strings
+                segments = [s for s in path.split("/") if s]
+                
+                exempt_paths = {"in", "pub", "profile", "company", "school", "posts", "feed", "jobs"}
+                
+                # Inject "in" segment if missing from a personal URL
+                if segments and segments[0].lower() not in exempt_paths:
+                    new_path = "/in/" + "/".join(segments)
+                    parsed = parsed._replace(path=new_path)
+                    url = urlunparse(parsed)
+        except Exception as e:
+            logger.warning(f"Error parsing linkedin url for path injection: {e}")
+
+    return url
+
 
 def verify_link_active(url: str) -> str:
     """

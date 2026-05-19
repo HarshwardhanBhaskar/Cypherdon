@@ -77,3 +77,49 @@ def test_public_profile_premium_user(mock_get_profile):
     assert response.status_code == 200
     assert response.json()["full_name"] == "Harshwardhan Bhaskar"
     assert response.json()["tier"] == "premium"
+
+
+from services.profile import autofix_link
+
+def test_autofix_link_github():
+    """Verify GitHub profile link repairs (handles, typos, protocols)."""
+    # Simple handle
+    assert autofix_link("octocat", "github") == "https://github.com/octocat"
+    # Missing protocol
+    assert autofix_link("github.com/octocat", "github") == "https://github.com/octocat"
+    # HTTP protocol to HTTPS
+    assert autofix_link("http://github.com/octocat", "github") == "https://github.com/octocat"
+    # Typos in domain name
+    assert autofix_link("git-hub.com/octocat", "github") == "https://github.com/octocat"
+    assert autofix_link("githb.com/octocat", "github") == "https://github.com/octocat"
+    assert autofix_link("githup.com/octocat", "github") == "https://github.com/octocat"
+    assert autofix_link("github.co/octocat", "github") == "https://github.com/octocat"
+    assert autofix_link("github.con/octocat", "github") == "https://github.com/octocat"
+    # Backslashes
+    assert autofix_link("github.com\\octocat", "github") == "https://github.com/octocat"
+
+def test_autofix_link_linkedin():
+    """Verify LinkedIn profile link repairs (handles, typos, missing /in/, and exclusions)."""
+    # Simple handle
+    assert autofix_link("john-doe", "linkedin") == "https://linkedin.com/in/john-doe"
+    # Missing protocol and missing /in/ path
+    assert autofix_link("linkedin.com/john-doe", "linkedin") == "https://linkedin.com/in/john-doe"
+    # Correct URL left intact (with protocol)
+    assert autofix_link("https://www.linkedin.com/in/john-doe", "linkedin") == "https://www.linkedin.com/in/john-doe"
+    # Typo and missing /in/
+    assert autofix_link("linkdin.com/john-doe", "linkedin") == "https://linkedin.com/in/john-doe"
+    assert autofix_link("linked-in.com/john-doe", "linkedin") == "https://linkedin.com/in/john-doe"
+    # Exempt pages not having /in/ injected
+    assert autofix_link("https://linkedin.com/company/tesla", "linkedin") == "https://linkedin.com/company/tesla"
+    assert autofix_link("https://www.linkedin.com/jobs/view/12345", "linkedin") == "https://www.linkedin.com/jobs/view/12345"
+
+def test_autofix_link_portfolio():
+    """Verify general portfolio/other link repairs."""
+    # General URL prepends protocol
+    assert autofix_link("myportfolio.com", "portfolio") == "https://myportfolio.com"
+    # HTTP upgraded to HTTPS
+    assert autofix_link("http://myportfolio.co.uk/home", "portfolio") == "https://myportfolio.co.uk/home"
+    # Empty/None
+    assert autofix_link("", "portfolio") == ""
+    assert autofix_link(None, "portfolio") is None
+
