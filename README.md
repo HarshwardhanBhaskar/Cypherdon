@@ -1,340 +1,277 @@
-# 🤖 Cypherdon — AI-Powered Job Application Automation
+# 🤖 Cypherdon
+
+> **An Enterprise-Grade Polyglot Platform for Asynchronous Job Application & AI-Driven Email Automation.**
 
 <div align="center">
 
-**Automate your job hunt. From resume parsing to cold emails — all AI-powered.**
-
-[![Java](https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-green?style=for-the-badge&logo=springboot)](https://spring.io/projects/spring-boot)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-teal?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-darkgreen?style=for-the-badge&logo=supabase)](https://supabase.com/)
-[![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?style=for-the-badge&logo=telegram)](https://core.telegram.org/bots)
+[![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Telegram](https://img.shields.io/badge/Telegram_Bot-Companion-26A5E4?style=flat-square&logo=telegram&logoColor=white)](https://core.telegram.org/bots)
 
 </div>
 
 ---
 
-## 📋 Table of Contents
+## 🏛️ Architectural Topology
 
-- [Overview](#-overview)
-- [Architecture](#-architecture)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [API Reference](#-api-reference)
-- [Telegram Bot & Account Linking](#-telegram-bot--account-linking)
-- [Automated Testing Suite](#-automated-testing-suite)
-- [Security](#-security)
-- [Contributing](#-contributing)
+Cypherdon is built on a **polyglot microservices architecture** designed for high throughput, robust async execution, and strict cross-service security boundaries.
 
----
+### System Flowchart
 
-## 🧠 Overview
+The following diagram illustrates the complete asynchronous telemetry, user authentication, and internal handshake patterns across the platform:
 
-Cypherdon is a **polyglot microservices platform** that automates the end-to-end job application process:
+```mermaid
+flowchart TD
+    %% Define User Interface Elements
+    subgraph ClientLayer ["Client Interface (Next.js 15)"]
+        UI["Web Dashboard Port: 3000"]
+        TGClient["Telegram Desktop / Mobile"]
+    end
 
-1. **Parse** your resume and get an ATS compatibility score
-2. **Match** your profile against job descriptions using a weighted scoring algorithm
-3. **Generate** personalized cold emails using AI (GPT-4o-mini)
-4. **Queue & send** those emails via a rate-limited SMTP scheduler
-5. **Control everything** from a Telegram bot — no web browser needed
+    %% Define Gateway and Core Services
+    subgraph BackendLayer ["Core Microservices Suite"]
+        SpringBoot["Spring Boot Core Engine\n(Port: 8080)\n- Core JPA Repositories\n- Asynchronous ExecutorService\n- JWT Authorization Filter"]
+        FastAPI["FastAPI AI & Scoring Engine\n(Port: 8000)\n- Resume Parsing (PyMuPDF)\n- AI Email Generation (GPT-4o)\n- Public Portfolio Gate"]
+        TGBot["Telegram Automation Agent\n(python-telegram-bot)\n- Button-Driven User Flow\n- Gemini-2.5 Coach Fallback"]
+    end
 
----
+    %% Define Storage
+    subgraph DataStorage ["Data & Security Layer"]
+        Supabase["Supabase Cloud Database\n(PostgreSQL + JWT Auth Server)"]
+    end
 
-## 🏗 Architecture
+    %% User Interactions
+    UI -->|1. Authenticates & Manages Profiles| Supabase
+    UI -->|2. REST Operations (JWT Authorized)| SpringBoot
+    TGClient -->|3. Initiates Session & Interacts| TGBot
+
+    %% Core Orchestration Handshakes
+    SpringBoot -->|Reads / Writes Metadata| Supabase
+    TGBot -->|4. Secure Pair Request (/link)| FastAPI
+    FastAPI -->|5. Service Handshake (X-Internal-Secret)| Supabase
+    TGBot -->|6. Enqueue Cold Email Task| SpringBoot
+    SpringBoot -->|7. Proxy Heavy Analysis Tasks| FastAPI
+
+    %% Formatting Nodes
+    style SpringBoot fill:#1b361b,stroke:#6DB33F,stroke-width:2px,color:#fff
+    style FastAPI fill:#0c2929,stroke:#009688,stroke-width:2px,color:#fff
+    style TGBot fill:#142d3b,stroke:#26A5E4,stroke-width:2px,color:#fff
+    style Supabase fill:#1a3328,stroke:#3ECF8E,stroke-width:2px,color:#fff
+    style ClientLayer fill:#111,stroke:#333,stroke-width:1px,color:#fff
+```
+
+### Microservice Network Layout
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Next.js     │────▶│  Spring Boot 4   │────▶│  FastAPI         │
-│  Frontend    │     │  (Java 21)       │     │  (Python 3.10)   │
-│  Port: 3000  │     │  Port: 8080      │     │  Port: 8000      │
-└─────────────┘     └──────────────────┘     └─────────────────┘
-                           │                         ▲
-                           │                         │
-                           ▼                         │
-                    ┌──────────────┐          ┌──────────────┐
-                    │  Supabase    │          │  Telegram    │
-                    │  PostgreSQL  │          │  Bot         │
-                    └──────────────┘          └──────────────┘
+                        +----------------------------+
+                        |     Next.js Web Client     |
+                        |        (Port 3000)         |
+                        +--------------+-------------+
+                                       | (REST / JWT)
+                                       v
+                        +----------------------------+
+                        |  Spring Boot Core Gateway  | <----+
+                        |        (Port 8080)         |      | (Async Queue API)
+                        +--------------+-------------+      |
+                                       |                    |
+             (JDBC Connection)         | (Internal REST)    |
+                    +------------------+                    |
+                    |                  v                    |
+                    v   +----------------------------+      |
+        +---------------+--+   FastAPI AI Engine     +------+---+
+        |    Supabase DB   |   |     (Port 8000)      |  Telegram Bot   |
+        |   (PostgreSQL)   |   +----------+-----------+  | (python-tg)   |
+        +------------------+              ^             +-------+-------+
+                                          |                     |
+                                          +---------------------+
+                                            (X-Internal-Secret Handshake)
 ```
 
-| Service | Role |
-|---------|------|
-| **Spring Boot** | Core API gateway, JWT auth, job/application tracking, email queue scheduler |
-| **FastAPI** | AI engine — resume parsing (PyMuPDF), ATS scoring, email generation (OpenAI) |
-| **Next.js** | Web dashboard with Supabase Auth |
-| **Telegram Bot** | Mobile-first, button-driven UI for the entire automation flow |
-| **Supabase** | PostgreSQL database + user authentication |
+---
+
+## ⚡ Technical Core Features
+
+### 📭 High-Throughput Asynchronous Mail Pipeline
+To protect developer domains from blacklisting and prevent spam filters from catching cold emails, Cypherdon integrates a resilient, rate-limited worker engine inside the Spring Boot Core:
+* **Concurreny Engine**: Managed via a dedicated `ExecutorService` thread pool.
+* **Randomized Jitter Delay**: Executes a randomized 10–20 minute send delay between individual emails to simulate authentic manual behavior.
+* **Dynamic Backoff**: Requeues failed sends using a progressive retry timeline (5 mins → 15 mins → 45 mins) to handle server-side rate limits or SMTP network hiccups.
+* **Gated Tiering**: Automatically enforces daily limits:
+  * **Free Account**: Limit of 3 cold-emails queued and executed per 24-hour cycle.
+  * **Premium Account**: Multiplies capacity to 15 queued sends per day.
+
+### 🛡️ Double-Auth Gated Security Boundaries
+The application is structured under strict, isolated security tiers preventing unauthorized inter-service communication:
+1. **User Auth Boundary**: All user endpoints require a valid Bearer JWT issued and authenticated by **Supabase Auth**.
+2. **Service Auth Boundary**: All service-to-service API calls (e.g. Telegram Bot to FastAPI, Spring Boot proxy handshakes) are gated by a custom middleware filter that inspects and validates the `X-Internal-Secret` header token. This locks down internal operations from the public internet.
+
+### 🌟 Premium White-Labeled Developer Portfolios
+Premium members unlock recruiter-facing public portfolio sharing links.
+* **Locked-by-Default Core**: The `/api/profile/public/{user_id}` route conducts an internal subscription state check.
+* **Enforced Gating**: Free tier profiles requesting a portfolio review are rejected with a structured `403 Forbidden` response. Premium tier users' portfolios bypass authorization headers to serve beautifully rendered public developer bios directly to hiring managers.
+
+### 🤖 Web Console Pairing & Telegram Bot Co-Pilot
+The bot acts as a fully command-free companion for resume tracking, scoring, and AI mail generation:
+* **Pairing Handshake**: Users copy their unique, one-time pairing key `/link email@domain.com` directly from the glassmorphic **Telegram Agent Integration Card** inside the web Console Settings tab (`/profile` page).
+* **Gemini AI Career Mentor Fallback**: Built directly on `google-generativeai` (`gemini-2.5-flash`), the companion bot acts as a responsive interview coach when conversed with outside the automated cold mail lifecycle.
 
 ---
 
-## ✨ Features
-
-### Resume Analysis
-- PDF text extraction via **PyMuPDF**
-- ATS scoring (0–100) based on keyword match, section presence, and quantified achievements
-- Actionable improvement suggestions
-
-### Job Matching
-- Deterministic scoring algorithm with weighted criteria:
-  - Skill match (50%)
-  - Role alignment (30%)
-  - Experience level (20%)
-- Returns match score + missing skills
-
-### AI Cold Email Generation
-- Powered by **GPT-4o-mini** with structured JSON output
-- Supports multiple tones: `formal` and `startup`
-- Personalized per company — mentions specific projects from your resume
-
-### Email Queue System
-- Rate-limited: 3/day (free) or 15/day (paid)
-- Randomized 10–20 minute send delay (anti-spam)
-- Exponential backoff retry (5min → 15min → 45min)
-- Async processing via dedicated `ExecutorService` thread pool
-- Gmail SMTP with App Password authentication
-
-### Telegram Bot Integration
-- **100% Inline Button Flow**: Interactive user flow requiring zero manually typed commands during cold mailing. Upload resume → Select role → Target company → Review AI email → Approve & queue.
-- **Microservices Orchestration**: Real-time integration with FastAPI (AI Resume Parsing, Gemini Mentor, and Cold Email Generation) and Spring Boot (Email Queue Worker).
-- **Interactive Career Mentor**: Instant access to an active conversational Google Gemini AI career agent directly through the bot for advice, interview practice, and resume tuning.
-
-### Premium Subscription Tier
-- **White-Labeled Portfolio Sharing**: Recruiter-ready public portfolio sharing link (`/api/profile/public/{user_id}`) enabled exclusively for Premium accounts.
-- **Unrestricted Bot Workflows**: Access 24/7 automated resume parsing, AI cold-email draft generation, and queued delivery pipelines.
-- **Elevated Send Limits**: Expands email queues to 15 queued sends per day (from 3 per day for Free accounts).
-
-### Security
-- Supabase JWT authentication on all user endpoints
-- Internal microservice auth via `X-Internal-Secret` header filter
-- All secrets externalized via environment variables
-- Database connection pooling (HikariCP, 25 connections)
-
----
-
-## 🛠 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 15, TypeScript, TailwindCSS |
-| Core Backend | Spring Boot 4, Java 21, Spring Security, Spring Mail |
-| AI Engine | FastAPI, Python 3.10, PyMuPDF, OpenAI SDK |
-| Bot | python-telegram-bot v21, httpx |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth + JWT |
-| Email | Gmail SMTP |
-
----
-
-## 📁 Project Structure
+## 📂 System Directory Topology
 
 ```
 cypherdon/
-├── frontend/                # Next.js web dashboard
-│   ├── app/                 # Pages (login, signup, dashboard, profile)
-│   ├── components/          # Reusable UI components
-│   └── lib/                 # API client utilities
+├── frontend/                # Next.js 15 Web Application Dashboard
+│   ├── app/                 # Page router components (dashboard, billing, settings)
+│   │   ├── complete-profile/# Developer onboard walkthrough page
+│   │   ├── portfolio/       # Publicly viewable white-labeled portfolio
+│   │   └── profile/         # Profile Settings containing the Telegram Integration Card
+│   ├── components/          # Shared components (ParticleSphere, AvatarDropdown, Footer)
+│   └── lib/                 # Core browser SDKs and storage wrappers
 │
-├── backend/                 # Python FastAPI (AI Engine)
-│   ├── bot/                 # Telegram bot (ConversationHandler)
-│   ├── routers/             # API route handlers
-│   ├── services/            # Business logic (matcher, email gen, resume parser)
-│   ├── schemas/             # Pydantic models
+├── backend/                 # Python FastAPI (AI & Contextual Parsing Engine)
+│   ├── bot/                 # Telegram Bot orchestrator & Gemini Career Coach
+│   ├── routers/             # API Endpoints (Resume scoring, AI generation, Public profile gates)
+│   ├── services/            # Deep-analysis algorithms (PyMuPDF parser, ATS scoring)
+│   ├── tests/               # Automated test coverage suite (pytest)
 │   └── requirements.txt
 │
-├── spring-backend/          # Java Spring Boot (Core Server)
-│   └── src/main/java/com/cypherdon/core/
-│       ├── config/          # SecurityConfig, InternalApiKeyFilter
-│       ├── controller/      # REST controllers
-│       ├── dto/             # Data transfer objects
-│       ├── model/           # JPA entities (User, Job, Application, EmailTask)
-│       ├── repository/      # Spring Data JPA repositories
-│       ├── scheduler/       # EmailWorker (async queue processor)
-│       └── service/         # Business services
-│
-├── scraper/                 # Job scraping utilities
-└── .gitignore
+└── spring-backend/          # Enterprise Core Gateway & Asynchronous Worker (Java 21)
+    └── src/main/java/com/cypherdon/core/
+        ├── config/          # JWT WebSecurity config & InternalApiKeyFilters
+        ├── controller/      # REST API Controllers (Signup, JWT-gateway proxies)
+        ├── repository/      # Spring Data JPA database connectors
+        └── scheduler/       # EmailWorker (Async ExecutorService email dispatcher)
 ```
 
 ---
 
-## 🚀 Getting Started
+## 📡 API Directory
 
-### Prerequisites
+### FastAPI Service (Port 8000)
 
-- Java 21+
-- Python 3.10+
-- Node.js 18+
-- A [Supabase](https://supabase.com) project
-- A Gmail account with [App Password](https://myaccount.google.com/apppasswords)
-- A [Telegram Bot Token](https://t.me/BotFather)
+| Endpoint | Verb | Authorization | Function |
+|:---|:---:|:---:|:---|
+| `/health` | `GET` | Public | Core platform health check |
+| `/api/resume/analyze` | `POST` | JWT Bearer | Process PDF upload & target role for ATS score |
+| `/api/emails/generate` | `POST` | JWT Bearer | Compile targeted cold emails via GPT-4o-mini |
+| `/api/match-jobs` | `POST` | JWT Bearer | Returns Skill, Role, and Experience match matrix |
+| `/api/profile/` | `GET` | JWT Bearer | Fetch the authenticated user's complete profile |
+| `/api/profile/` | `PUT` | JWT Bearer | Update specific fields in developer profile |
+| `/api/profile/public/{user_id}` | `GET` | Public | Public white-labeled portfolio data (Gated to Premium) |
+| `/api/profile/internal/by-email/{email}` | `GET` | Service Token | Handshake API for Telegram Bot user validation |
 
-### 1. Clone the repo
+### Spring Boot Core Engine (Port 8080)
 
-```bash
-git clone https://github.com/HarshwardhanBhaskar/Cypherdon.git
-cd Cypherdon
-```
-
-### 2. Configure environment variables
-
-```bash
-cp backend/.env.example backend/.env
-# Fill in your Supabase, OpenAI, Telegram, and service keys
-```
-
-Update `spring-backend/src/main/resources/application.yml` with your:
-- Database credentials
-- Gmail SMTP App Password
-- JWT secret
-
-### 3. Start the Python AI Engine
-
-```bash
-cd backend
-pip install -r requirements.txt
-python main.py
-# Running on http://localhost:8000
-```
-
-### 4. Start the Spring Boot Core Server
-
-```bash
-cd spring-backend
-./mvnw spring-boot:run
-# Running on http://localhost:8080
-```
-
-### 5. Start the Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-# Running on http://localhost:3000
-```
-
-### 6. Start the Telegram Bot
-
-```bash
-cd backend
-python -m bot.main
-# Bot is now polling for messages
-```
-
----
-
-## 📡 API Reference
-
-### FastAPI (AI Engine — Port 8000)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/api/resume/analyze` | JWT | Upload PDF + target role → ATS score |
-| `POST` | `/api/emails/generate` | JWT | Generate AI cold email |
-| `POST` | `/api/match-jobs` | JWT | Match user profile to job |
-| `GET`  | `/api/profile/` | JWT | Retrieve developer profile details |
-| `PUT`  | `/api/profile/` | JWT | Update developer profile details |
-| `GET`  | `/api/profile/public/{user_id}` | Public | Public white-labeled portfolio sharing (Gated to Premium) |
-| `GET`  | `/api/profile/internal/by-email/{email}` | Service Token | Internal verified lookup for Telegram Bot verification |
-| `GET`  | `/health` | Public | Service health check |
-
-### Spring Boot (Core — Port 8080)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `POST` | `/api/auth/signup` | Public | Register user |
-| `POST` | `/api/auth/login` | Public | Login user |
-| `GET`  | `/api/jobs` | JWT | List jobs |
-| `POST` | `/api/applications` | JWT | Create application |
-| `POST` | `/api/ai/analyze-resume` | Internal | Proxy to FastAPI |
-| `POST` | `/api/emails/queue` | Internal | Queue email for sending |
-
----
-
-## 🤖 Telegram Bot & Account Linking
-
-Cypherdon comes with an advanced mobile-first automation companion bot at [**@Cypherdon_Autobot**](https://t.me/Cypherdon_Autobot).
-
-### 🔗 Web Console Pairing Integration
-We've integrated a glassmorphic **Telegram Agent Integration Card** inside the Developer Identity Console under the **Console Settings** tab (`/profile` page):
-1. Navigate to your web-dashboard profile settings tab.
-2. Locate the **Cypherdon Telegram Agent** integration panel.
-3. Click the copy button to grab your custom linking command: `/link your_email@example.com`.
-4. Click **Launch Telegram Bot** to open the chat window in Telegram.
-
-### 🔄 Account Activation Flow
-1. Send `/link your_email@example.com` to the bot.
-2. The bot performs a secure service-to-service handshake with the FastAPI microservice using the `X-Internal-Secret` credential.
-3. Once paired, the bot fetches your live profile from the database and confirms your subscription tier:
-   - **Premium Users 🌟**: Complete automation access is instantly unlocked! Press `/start` to run.
-   - **Free Users ⚠️**: The bot will guide you to upgrade inside the web app's Simulator to unlock automated operations.
-
-### 🔮 Interactive Mentor & Job Hunter Loop
-- **Cold Email Automation**: `/start` → Upload Resume (PDF) → Select target role via inline buttons → Enter target company → Preview AI cold email → Approve & queue.
-- **Conversational Career Mentor**: Message the bot with any career or interview question! The bot uses Google Gemini (`gemini-2.5-flash`) to act as a career coach, reviewing skills, answering questions, or doing role-play mock interviews.
+| Endpoint | Verb | Authorization | Function |
+|:---|:---:|:---:|:---|
+| `/api/auth/signup` | `POST` | Public | Create new platform credentials |
+| `/api/auth/login` | `POST` | Public | Validate credentials & generate session tokens |
+| `/api/jobs` | `GET` | JWT Bearer | Returns user-specific scraped target job listings |
+| `/api/applications` | `POST` | JWT Bearer | Registers a job application record |
+| `/api/emails/queue` | `POST` | Service Token | Enqueue processed drafts for asynchronous randomized delivery |
 
 ---
 
 ## 🧪 Automated Testing Suite
 
-The Python FastAPI service features a robust, mock-driven automated testing suite to verify backend status, authorization structures, and database rules.
+Cypherdon features an automated, mock-driven backend validation suite built on `pytest` to ensure secure routing boundaries, profile updates, and subscription gates.
 
-### 📂 Test Architecture (`backend/tests/`)
-All tests are defined under the [backend/tests/](file:///c:/Users/hwbha/c++%20code/cypherdon/backend/tests/) directory and leverage `pytest` and `fastapi.testclient.TestClient`.
+### Test Coverage Breakdown
+The test harness located in [backend/tests/test_profile.py](file:///c:/Users/hwbha/c++%20code/cypherdon/backend/tests/test_profile.py) verifies the following critical paths:
+1. **Platform Integrity (`test_health_check`)**: Assures the base index endpoint returns healthy status telemetry.
+2. **Access Control Gates (`test_unauthorized_profile_access`)**: Asserts that unauthorized API requests to secure profile routes fail securely with a `403 Forbidden` status.
+3. **Dependency Injection Overrides (`test_authorized_profile_access`)**: Bypasses external cloud token dependencies using mock overrides to test clean schema extraction on profile fetch.
+4. **Premium Portfolio Gating**:
+   * `test_public_profile_free_user`: Assures public requests to free profiles return `403` with a explicit notice to upgrade subscription.
+   * `test_public_profile_premium_user`: Assures public requests to premium profiles succeed with a `200 OK` return.
 
-The suite covers:
-1. **System Health Check (`test_health_check`)**: Assures the base `/` health endpoint is fully online.
-2. **Access Control Gates (`test_unauthorized_profile_access`)**: Asserts that requests to secure user endpoints (e.g. `GET /api/profile/`) without proper bearer tokens fail with a `403 Forbidden` status.
-3. **Dependency Injection & Mocking (`test_authorized_profile_access`)**: Uses dependency overrides to bypass external Supabase token checks, ensuring mock authenticated profiles retrieve valid user payloads.
-4. **Subscription Paywall & Gating (`test_public_profile_free_user` & `test_public_profile_premium_user`)**:
-   - Asserts that requests to view a Free tier user's public portfolio link result in a gated `403 Forbidden` indicating a premium subscription is required.
-   - Asserts that Premium users' white-labeled portfolios are fully visible (`200 OK`) publicly to recruiters.
+### Running Backend Tests
+To run the automated Python test suite:
 
-### ⚙️ Running the Tests
-To execute the automated backend suite:
-
-1. Navigate to the backend directory:
+1. Enter the backend context:
    ```bash
    cd backend
    ```
-2. Run the tests using `pytest`:
+2. Execute the tests in verbose mode:
    ```bash
    pytest -v
    ```
 
 ---
 
-## 🔒 Security
+## 🛠️ Step-by-Step Local Deployment
 
-- **No secrets in source code** — all credentials use `${ENV_VAR:default}` syntax
-- **InternalApiKeyFilter** — custom Spring Security filter for service-to-service auth
-- **JWT validation** on all user-facing endpoints
-- **Rate limiting** — prevents email abuse (3/day free, 15/day paid)
-- **HikariCP tuning** — connection pool sized for production load
-- **Database indexes** — composite indexes on hot query paths
+### 1. Prerequisites
+Install these platform runtimes on your local workstation:
+* **Java**: OpenJDK 21+
+* **Python**: Python 3.10+ (ensure `pip` is updated)
+* **Node.js**: Node 18+ (bundled with `npm`)
+* Set up a **Supabase Project** and generate an API key and Database URI.
+* Acquire a **Gmail SMTP App Password** for sending emails.
+* Retrieve a bot token from Telegram's **@BotFather**.
+
+### 2. Configure Environment Variables
+Create a unified `.env` file under the `/backend` directory:
+```env
+TELEGRAM_BOT_TOKEN="your_telegram_bot_token"
+FASTAPI_URL="http://localhost:8000"
+SPRING_BOOT_URL="http://localhost:8080"
+INTERNAL_SERVICE_KEY="your_secure_internal_handshake_secret"
+SUPABASE_URL="your_supabase_project_url"
+SUPABASE_KEY="your_supabase_anon_public_key"
+GEMINI_API_KEY="your_gemini_api_key_for_career_coach"
+OPENAI_API_KEY="your_openai_api_key_for_resume_scoring"
+```
+
+Configure your datasource parameters and App Passwords inside `spring-backend/src/main/resources/application.yml`.
+
+### 3. Initialize the AI & Automation Backend
+```bash
+cd backend
+pip install -r requirements.txt
+python main.py
+```
+*Engine active and listening at `http://localhost:8000`*
+
+### 4. Boot the Core Gateway Server
+```bash
+cd spring-backend
+./mvnw spring-boot:run
+```
+*Core active and listening at `http://localhost:8080`*
+
+### 5. Launch the Client Portal
+```bash
+cd frontend
+npm install
+npm run dev
+```
+*Client active and running at `http://localhost:3000`*
+
+### 6. Spin Up the Telegram Companion Bot
+```bash
+cd backend
+python -m bot.main
+```
+*Bot active and polling Telegram servers for incoming web-pairs!*
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contribution Guidelines
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
+1. **Fork** this codebase to your own namespace.
+2. Form a new workspace branch: `git checkout -b feature/amazing-optimization`
+3. Commit code following strict conventional commit guidelines.
+4. Verify changes against the automated testing suite (`pytest -v`).
+5. Open a **Pull Request** detailing system optimizations and benchmark differences.
 
 ---
 
 <div align="center">
-  <b>Built with ❤️ by <a href="https://github.com/HarshwardhanBhaskar">Harsh Wardhan Bhaskar</a></b>
+  <b>Architected and Crafted by <a href="https://github.com/HarshwardhanBhaskar">Harsh Wardhan Bhaskar</a></b>
 </div>
