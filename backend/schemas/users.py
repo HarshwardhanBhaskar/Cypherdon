@@ -46,6 +46,7 @@ class UserResponse(BaseModel):
     skills: List[str] = []
     experience_level: str = "entry"
     resume_url: Optional[str] = None
+    tier: str = "free"
     
     address: Optional[str] = None
     city: Optional[str] = None

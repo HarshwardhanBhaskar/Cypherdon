@@ -25,7 +25,8 @@
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
 - [API Reference](#-api-reference)
-- [Telegram Bot](#-telegram-bot)
+- [Telegram Bot & Account Linking](#-telegram-bot--account-linking)
+- [Automated Testing Suite](#-automated-testing-suite)
 - [Security](#-security)
 - [Contributing](#-contributing)
 
@@ -96,10 +97,15 @@ Cypherdon is a **polyglot microservices platform** that automates the end-to-end
 - Async processing via dedicated `ExecutorService` thread pool
 - Gmail SMTP with App Password authentication
 
-### Telegram Bot
-- 100% inline button-driven — no commands needed
-- Upload resume → Select role → Target company → Review AI email → Approve & queue
-- Real-time integration with both FastAPI and Spring Boot
+### Telegram Bot Integration
+- **100% Inline Button Flow**: Interactive user flow requiring zero manually typed commands during cold mailing. Upload resume → Select role → Target company → Review AI email → Approve & queue.
+- **Microservices Orchestration**: Real-time integration with FastAPI (AI Resume Parsing, Gemini Mentor, and Cold Email Generation) and Spring Boot (Email Queue Worker).
+- **Interactive Career Mentor**: Instant access to an active conversational Google Gemini AI career agent directly through the bot for advice, interview practice, and resume tuning.
+
+### Premium Subscription Tier
+- **White-Labeled Portfolio Sharing**: Recruiter-ready public portfolio sharing link (`/api/profile/public/{user_id}`) enabled exclusively for Premium accounts.
+- **Unrestricted Bot Workflows**: Access 24/7 automated resume parsing, AI cold-email draft generation, and queued delivery pipelines.
+- **Elevated Send Limits**: Expands email queues to 15 queued sends per day (from 3 per day for Free accounts).
 
 ### Security
 - Supabase JWT authentication on all user endpoints
@@ -225,12 +231,16 @@ python -m bot.main
 
 ### FastAPI (AI Engine — Port 8000)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/resume/analyze` | Upload PDF + target role → ATS score |
-| `POST` | `/api/emails/generate` | Generate AI cold email |
-| `POST` | `/api/match-jobs` | Match user profile to job |
-| `GET`  | `/health` | Service health check |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/resume/analyze` | JWT | Upload PDF + target role → ATS score |
+| `POST` | `/api/emails/generate` | JWT | Generate AI cold email |
+| `POST` | `/api/match-jobs` | JWT | Match user profile to job |
+| `GET`  | `/api/profile/` | JWT | Retrieve developer profile details |
+| `PUT`  | `/api/profile/` | JWT | Update developer profile details |
+| `GET`  | `/api/profile/public/{user_id}` | Public | Public white-labeled portfolio sharing (Gated to Premium) |
+| `GET`  | `/api/profile/internal/by-email/{email}` | Service Token | Internal verified lookup for Telegram Bot verification |
+| `GET`  | `/health` | Public | Service health check |
 
 ### Spring Boot (Core — Port 8080)
 
@@ -245,17 +255,56 @@ python -m bot.main
 
 ---
 
-## 🤖 Telegram Bot
+## 🤖 Telegram Bot & Account Linking
 
-Search for **@Cypherdon_Autobot** on Telegram and press Start.
+Cypherdon comes with an advanced mobile-first automation companion bot at [**@Cypherdon_Autobot**](https://t.me/Cypherdon_Autobot).
 
-**Flow:**
-1. 🚀 Start Automation
-2. 📄 Upload Resume (PDF)
-3. 🎯 Select Role (inline buttons)
-4. 🏢 Type Company Name
-5. 📧 Review AI Email → Approve ✅ or Regenerate 🔄
-6. ✅ Email queued for automated sending!
+### 🔗 Web Console Pairing Integration
+We've integrated a glassmorphic **Telegram Agent Integration Card** inside the Developer Identity Console under the **Console Settings** tab (`/profile` page):
+1. Navigate to your web-dashboard profile settings tab.
+2. Locate the **Cypherdon Telegram Agent** integration panel.
+3. Click the copy button to grab your custom linking command: `/link your_email@example.com`.
+4. Click **Launch Telegram Bot** to open the chat window in Telegram.
+
+### 🔄 Account Activation Flow
+1. Send `/link your_email@example.com` to the bot.
+2. The bot performs a secure service-to-service handshake with the FastAPI microservice using the `X-Internal-Secret` credential.
+3. Once paired, the bot fetches your live profile from the database and confirms your subscription tier:
+   - **Premium Users 🌟**: Complete automation access is instantly unlocked! Press `/start` to run.
+   - **Free Users ⚠️**: The bot will guide you to upgrade inside the web app's Simulator to unlock automated operations.
+
+### 🔮 Interactive Mentor & Job Hunter Loop
+- **Cold Email Automation**: `/start` → Upload Resume (PDF) → Select target role via inline buttons → Enter target company → Preview AI cold email → Approve & queue.
+- **Conversational Career Mentor**: Message the bot with any career or interview question! The bot uses Google Gemini (`gemini-2.5-flash`) to act as a career coach, reviewing skills, answering questions, or doing role-play mock interviews.
+
+---
+
+## 🧪 Automated Testing Suite
+
+The Python FastAPI service features a robust, mock-driven automated testing suite to verify backend status, authorization structures, and database rules.
+
+### 📂 Test Architecture (`backend/tests/`)
+All tests are defined under the [backend/tests/](file:///c:/Users/hwbha/c++%20code/cypherdon/backend/tests/) directory and leverage `pytest` and `fastapi.testclient.TestClient`.
+
+The suite covers:
+1. **System Health Check (`test_health_check`)**: Assures the base `/` health endpoint is fully online.
+2. **Access Control Gates (`test_unauthorized_profile_access`)**: Asserts that requests to secure user endpoints (e.g. `GET /api/profile/`) without proper bearer tokens fail with a `403 Forbidden` status.
+3. **Dependency Injection & Mocking (`test_authorized_profile_access`)**: Uses dependency overrides to bypass external Supabase token checks, ensuring mock authenticated profiles retrieve valid user payloads.
+4. **Subscription Paywall & Gating (`test_public_profile_free_user` & `test_public_profile_premium_user`)**:
+   - Asserts that requests to view a Free tier user's public portfolio link result in a gated `403 Forbidden` indicating a premium subscription is required.
+   - Asserts that Premium users' white-labeled portfolios are fully visible (`200 OK`) publicly to recruiters.
+
+### ⚙️ Running the Tests
+To execute the automated backend suite:
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Run the tests using `pytest`:
+   ```bash
+   pytest -v
+   ```
 
 ---
 

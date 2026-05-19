@@ -54,3 +54,43 @@ async def upload_resume(user_id: str, file: UploadFile) -> str:
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload resume: {str(e)}")
+
+async def upload_image(user_id: str, file: UploadFile) -> str:
+    """
+    Validates and uploads an image to Cloudinary.
+    Returns the secure URL.
+    """
+    # 1. Validate File Type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are allowed.")
+
+    # 2. Validate File Size
+    file_bytes = await file.read()
+    if len(file_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File size exceeds the 2MB limit.")
+
+    # Reset file cursor for any future reads
+    await file.seek(0)
+
+    # 3. Generate Secure Name
+    timestamp = int(time.time())
+    public_id = f"{user_id}_{timestamp}_image"
+
+    try:
+        # 4. Upload to Cloudinary
+        response: Dict[str, Any] = cloudinary.uploader.upload(
+            file_bytes,
+            folder="cypherdon/images",
+            public_id=public_id,
+            resource_type="image",
+            overwrite=True
+        )
+        
+        secure_url = response.get("secure_url")
+        if not secure_url:
+            raise Exception("Cloudinary did not return a secure URL")
+            
+        return secure_url
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")

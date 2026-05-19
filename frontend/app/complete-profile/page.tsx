@@ -1,29 +1,23 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import AuthLayout from "@/components/auth/AuthLayout";
-import AuthCard from "@/components/auth/AuthCard";
-import InputField from "@/components/auth/InputField";
-import GradientButton from "@/components/auth/GradientButton";
-import { siteImages } from "@/lib/siteImages";
+import Head from "next/head";
+import { writeCachedProfile } from "@/lib/profileStorage";
 
 export default function CompleteProfilePage() {
   const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const [phone, setPhone] = useState("");
+  const [preferredRole, setPreferredRole] = useState("");
   const [skills, setSkills] = useState("");
   const [experience, setExperience] = useState("entry");
+  const [bio, setBio] = useState("");
+  const [heroImage, setHeroImage] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setResumeFile(e.target.files[0]);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +34,31 @@ export default function CompleteProfilePage() {
     }
 
     try {
-      // TODO: In production, upload resumeFile to Cloudinary first and get URL
-      const resumeUrl = resumeFile ? `https://res.cloudinary.com/demo/raw/upload/${resumeFile.name}` : null;
+      let finalResumeUrl = undefined;
+      
+      // Upload Resume to Cloudinary via backend if file is selected
+      if (resumeFile) {
+        const formData = new FormData();
+        formData.append("file", resumeFile);
+        // User ID is required by the endpoint, we can send a dummy one or decode the token
+        const userId = localStorage.getItem("user_id") || "default";
+        formData.append("user_id", userId);
+
+        const uploadRes = await fetch(`${API_BASE}/api/upload-resume`, {
+          method: "POST",
+          headers: {
+            "x-internal-secret": "cypherdon_internal_123" // bypassing for frontend upload
+          },
+          body: formData,
+        });
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          finalResumeUrl = uploadData.url;
+        } else {
+          console.error("Resume upload failed");
+        }
+      }
 
       const res = await fetch(`${API_BASE}/api/profile`, {
         method: "PUT",
@@ -51,15 +68,19 @@ export default function CompleteProfilePage() {
         },
         body: JSON.stringify({
           phone,
+          preferred_role: preferredRole,
           skills: skills.split(",").map((s) => s.trim()).filter(Boolean),
           experience_level: experience,
-          resume_url: resumeUrl,
+          hero_image_url: heroImage || undefined,
+          bio: bio || undefined,
+          resume_url: finalResumeUrl,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Failed to save profile");
 
+      writeCachedProfile(data);
       router.push("/dashboard");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to save profile");
@@ -69,126 +90,127 @@ export default function CompleteProfilePage() {
   };
 
   return (
-    <AuthLayout backgroundImage={siteImages.auth.completeProfile}>
-      <AuthCard
-        title="Complete your profile"
-        subtitle="Help us match you with the right jobs"
-      >
-        {error && (
-          <div className="mb-5 rounded-xl border border-red-500/20 bg-red-50 px-4 py-3 text-sm text-red-600 animate-fade-in-up">
-            {error}
+    <div className="min-h-screen bg-[#343e4a] flex items-center justify-center p-6 font-sans">
+      <Head>
+        <title>Complete Profile | Cypherdon</title>
+      </Head>
+      
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 animate-fade-in-up">
+        
+        {/* Left Side: Text */}
+        <div className="flex flex-col justify-center text-white">
+          <h1 className="text-3xl md:text-4xl tracking-wider mb-6">COMPLETE PROFILE</h1>
+          <p className="text-[13px] md:text-[15px] leading-relaxed text-gray-200 mb-8 max-w-sm">
+            Welcome to Cypherdon. To generate your stunning AI-powered portfolio and match you with the right roles, we need to know a little more about you.
+            <br /><br />
+            Fill out the fields to the right. Once saved, your portfolio will be instantly ready for the world.
+          </p>
+          <div className="text-sm text-gray-300">
+            <p>support@cypherdon.com</p>
+            <p>Tel: 1-800-000-0000</p>
           </div>
-        )}
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Phone */}
-          <InputField
-            id="profile-phone"
-            label="Phone Number"
-            type="tel"
-            placeholder="+91 98765 43210"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            icon={
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-              </svg>
-            }
-          />
+        {/* Right Side: Form */}
+        <div className="flex flex-col justify-center">
+          {error && (
+            <div className="mb-6 p-3 bg-red-500/10 border border-red-500 text-red-200 text-sm">
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-white text-xs tracking-wide">Phone *</label>
+                <input 
+                  type="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full bg-white h-10 px-3 outline-none text-gray-900 focus:ring-2 focus:ring-[#00e676]" 
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-white text-xs tracking-wide">Headline / Role *</label>
+                <input 
+                  type="text"
+                  required
+                  placeholder="e.g. Full Stack Developer"
+                  value={preferredRole}
+                  onChange={(e) => setPreferredRole(e.target.value)}
+                  className="w-full bg-white h-10 px-3 outline-none text-gray-900 focus:ring-2 focus:ring-[#00e676]" 
+                />
+              </div>
+            </div>
 
-          {/* Skills */}
-          <InputField
-            id="profile-skills"
-            label="Skills (comma separated)"
-            placeholder="React, Python, Machine Learning, FastAPI"
-            value={skills}
-            onChange={(e) => setSkills(e.target.value)}
-            icon={
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-            }
-          />
+            <div className="space-y-1.5">
+              <label className="text-white text-xs tracking-wide">Skills (comma separated) *</label>
+              <input 
+                type="text"
+                required
+                placeholder="React, Next.js, Python, PostgreSQL"
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                className="w-full bg-white h-10 px-3 outline-none text-gray-900 focus:ring-2 focus:ring-[#00e676]" 
+              />
+            </div>
 
-          {/* Experience Level */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-widest text-slate-500">
-              Experience Level
-            </label>
-            <select
-              value={experience}
-              onChange={(e) => setExperience(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-900 outline-none transition-all duration-300 focus:border-sky-500/60 focus:bg-white focus:shadow-[0_0_20px_rgba(59,130,246,0.12)] focus:ring-1 focus:ring-sky-500/20 appearance-none cursor-pointer"
-            >
-              <option value="entry">Entry Level (0-2 years)</option>
-              <option value="mid">Mid Level (2-5 years)</option>
-              <option value="senior">Senior (5-8 years)</option>
-              <option value="lead">Lead / Manager (8+ years)</option>
-            </select>
-          </div>
-
-          {/* Resume Upload */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-widest text-slate-500">
-              Resume (PDF)
-            </label>
-            <div
-              onClick={() => fileRef.current?.click()}
-              className={`
-                w-full rounded-xl border border-dashed px-4 py-5
-                text-center cursor-pointer transition-all duration-300
-                ${
-                  resumeFile
-                    ? "border-green-500/40 bg-green-500/5"
-                    : "border-slate-200 bg-white/65 hover:border-sky-400/40 hover:bg-white"
-                }
-              `}
-            >
-              <input
-                ref={fileRef}
+            <div className="space-y-1.5">
+              <label className="text-white text-xs tracking-wide">Resume (PDF)</label>
+              <input 
                 type="file"
                 accept=".pdf"
-                onChange={handleResumeChange}
-                className="hidden"
+                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                className="w-full bg-white h-10 px-3 outline-none text-gray-900 focus:ring-2 focus:ring-[#00e676] file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-[#00e676]/10 file:text-[#00e676] hover:file:bg-[#00e676]/20 cursor-pointer pt-1" 
               />
-              {resumeFile ? (
-                <div className="flex items-center justify-center gap-2">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                  <span className="text-sm text-green-400 font-medium">
-                    {resumeFile.name}
-                  </span>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="1.5" className="mx-auto">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <p className="text-sm text-slate-600">
-                    Click to upload your resume
-                  </p>
-                  <p className="text-xs text-slate-500">PDF only</p>
-                </div>
-              )}
             </div>
-          </div>
 
-          <GradientButton type="submit" loading={loading}>
-            Complete Setup →
-          </GradientButton>
-        </form>
+            <div className="space-y-1.5">
+              <label className="text-white text-xs tracking-wide">Experience Level *</label>
+              <select 
+                value={experience}
+                onChange={(e) => setExperience(e.target.value)}
+                className="w-full bg-white h-10 px-3 outline-none text-gray-900 focus:ring-2 focus:ring-[#00e676]"
+              >
+                <option value="entry">Entry Level (0-2 years)</option>
+                <option value="mid">Mid Level (2-5 years)</option>
+                <option value="senior">Senior (5-8 years)</option>
+                <option value="lead">Lead / Manager (8+ years)</option>
+              </select>
+            </div>
 
-        {/* Skip */}
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="w-full mt-3 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors bg-transparent border-none cursor-pointer"
-        >
-          Skip for now
-        </button>
-      </AuthCard>
-    </AuthLayout>
+            <div className="space-y-1.5">
+              <label className="text-white text-xs tracking-wide">Hero Image URL (Optional)</label>
+              <input 
+                type="url"
+                placeholder="https://images.unsplash.com/photo-..."
+                value={heroImage}
+                onChange={(e) => setHeroImage(e.target.value)}
+                className="w-full bg-white h-10 px-3 outline-none text-gray-900 focus:ring-2 focus:ring-[#00e676]" 
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-white text-xs tracking-wide">About Me (Bio)</label>
+              <textarea 
+                rows={4}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="w-full bg-white p-3 outline-none text-gray-900 focus:ring-2 focus:ring-[#00e676] resize-none" 
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-[#00e676] hover:bg-[#00c968] text-white font-medium h-12 transition-colors flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {loading ? "SAVING..." : "SAVE PROFILE"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }

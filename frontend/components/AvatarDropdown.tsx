@@ -6,6 +6,7 @@ interface AvatarDropdownProps {
   userName?: string;
   avatarUrl?: string;
   onLogout: () => void;
+  tier?: string;
 }
 
 /**
@@ -15,6 +16,7 @@ export default function AvatarDropdown({
   userName = "User",
   avatarUrl,
   onLogout,
+  tier = "free",
 }: AvatarDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -30,9 +32,9 @@ export default function AvatarDropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const initials = userName
+  const initials = (userName || "User")
     .split(" ")
-    .map((n) => n[0])
+    .map((n) => n[0] || "")
     .join("")
     .substring(0, 2)
     .toUpperCase();
@@ -42,21 +44,46 @@ export default function AvatarDropdown({
       {/* Avatar button */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 pl-1 pr-3 py-1 transition-all duration-200 hover:bg-white/10 hover:border-purple-500/30 cursor-pointer"
+        className={`flex items-center gap-2.5 rounded-full border bg-white/5 pl-1 pr-3 py-1 transition-all duration-200 hover:bg-white/10 cursor-pointer ${
+          tier === "premium"
+            ? "border-amber-500/40 hover:border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.1)] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+            : "border-white/10 hover:border-purple-500/30"
+        }`}
       >
         {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={userName}
-            className="w-8 h-8 rounded-full object-cover"
-          />
+          <div className="relative w-8 h-8 flex items-center justify-center">
+            <img
+              src={avatarUrl}
+              alt={userName}
+              className={`w-8 h-8 rounded-full object-cover ${
+                tier === "premium" ? "border border-amber-500/50" : ""
+              }`}
+            />
+            {tier === "premium" && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 border border-[#06060e] rounded-full flex items-center justify-center text-[6px] text-[#06060e] font-extrabold shadow-[0_0_4px_rgba(245,158,11,0.5)]">
+                ★
+              </span>
+            )}
+          </div>
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center text-xs font-bold text-white">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white relative ${
+            tier === "premium"
+              ? "bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-600 border border-amber-500/40 shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)]"
+              : "bg-gradient-to-br from-sky-500 to-indigo-500"
+          }`}>
             {initials}
+            {tier === "premium" && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-gradient-to-r from-yellow-400 to-amber-500 border border-[#06060e] rounded-full flex items-center justify-center text-[6px] text-[#06060e] font-extrabold shadow-[0_0_4px_rgba(245,158,11,0.5)]">
+                ★
+              </span>
+            )}
           </div>
         )}
-        <span className="text-sm text-slate-300 font-medium hidden sm:block">
+        <span className={`text-sm font-medium hidden sm:block ${
+          tier === "premium" ? "text-amber-400 font-semibold" : "text-slate-300"
+        }`}>
           {userName.split(" ")[0]}
+          {tier === "premium" && " 👑"}
         </span>
         <svg
           width="12"
@@ -77,7 +104,13 @@ export default function AvatarDropdown({
           {/* User info header */}
           <div className="px-4 py-2.5 border-b border-white/5">
             <p className="text-sm font-semibold text-white">{userName}</p>
-            <p className="text-xs text-slate-500 mt-0.5">Free Plan</p>
+            {tier === "premium" ? (
+              <p className="text-xs font-bold text-amber-400 mt-1 flex items-center gap-1">
+                <span className="inline-block animate-pulse text-[10px]">🌟</span> Premium Plan
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500 mt-0.5">Free Plan</p>
+            )}
           </div>
 
           {/* Links */}

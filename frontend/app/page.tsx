@@ -258,13 +258,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
-        <footer className="border-t border-slate-200/80 bg-white/70 py-8 text-center backdrop-blur-md">
-          <p className="text-sm text-slate-500">
-            Copyright 2026 Cypherdon. Career tooling with a clearer visual
-            identity.
-          </p>
-        </footer>
       </main>
     </>
   );

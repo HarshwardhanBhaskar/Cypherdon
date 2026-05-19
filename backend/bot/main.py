@@ -22,6 +22,15 @@ from telegram.ext import (
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://localhost:8000")
 SPRING_BOOT_URL = os.getenv("SPRING_BOOT_URL", "http://localhost:8080")
 INTERNAL_SECRET = os.getenv("INTERNAL_SERVICE_KEY", "cypherdon_internal_123")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+import google.generativeai as genai
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    gemini_model = genai.GenerativeModel('gemini-2.5-flash') # Using the model the user has on their free tier
+else:
+    logger.warning("GEMINI_API_KEY not found. AI Mentor features will be disabled.")
+    gemini_model = None
 
 # Shared persistent HTTP client — reuses TCP connections across requests
 http_client = httpx.AsyncClient(
@@ -38,15 +47,119 @@ logger = logging.getLogger(__name__)
 # Conversation States
 AWAITING_RESUME, SELECTING_ROLE, AWAITING_JOB_LIST, REVIEWING_EMAIL = range(4)
 
+async def check_user_tier(context: ContextTypes.DEFAULT_TYPE) -> str:
+    """Helper to check the user's current subscription tier live from backend."""
+    email = context.user_data.get('linked_email')
+    if not email:
+        return "unlinked"
+    try:
+        headers = {"x-internal-secret": INTERNAL_SECRET}
+        response = await http_client.get(
+            f"{FASTAPI_URL}/api/profile/internal/by-email/{email}",
+            headers=headers
+        )
+        if response.status_code == 200:
+            user_profile = response.json()
+            tier = user_profile.get("tier", "free")
+            context.user_data['tier'] = tier
+            return tier
+    except Exception as e:
+        logger.error(f"Error checking live tier: {e}")
+    # Fallback to local cache if network is down
+    return context.user_data.get('tier', 'free')
+
+async def link_account(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Links the user's Telegram chat with their Cypherdon registered email."""
+    if not update.message:
+        return
+    if not context.args:
+        await update.message.reply_text(
+            "🤖 **Cypherdon Account Linking**\n\n"
+            "Please provide your registered email address.\n"
+            "Usage: `/link your_email@example.com`",
+            parse_mode="Markdown"
+        )
+        return
+
+    email = context.args[0].strip().lower()
+    await update.message.reply_text(f"⏳ Verifying Cypherdon account for `{email}`...", parse_mode="Markdown")
+
+    try:
+        headers = {"x-internal-secret": INTERNAL_SECRET}
+        response = await http_client.get(
+            f"{FASTAPI_URL}/api/profile/internal/by-email/{email}",
+            headers=headers
+        )
+        
+        if response.status_code == 200:
+            user_profile = response.json()
+            context.user_data['linked_email'] = email
+            context.user_data['tier'] = user_profile.get("tier", "free")
+            
+            tier_display = "🌟 PREMIUM" if context.user_data['tier'] == "premium" else "Standard FREE"
+            
+            msg = (
+                f"✅ **Account Linked Successfully!**\n\n"
+                f"👤 **Developer**: {user_profile.get('full_name', 'N/A')}\n"
+                f"📧 **Email**: {email}\n"
+                f"💳 **Subscription Tier**: {tier_display}\n\n"
+            )
+            if context.user_data['tier'] == "premium":
+                msg += "🚀 **All premium bot automation services are fully unlocked!** Type `/start` to begin."
+            else:
+                msg += (
+                    "⚠️ **Bot services are restricted to premium subscribers.**\n\n"
+                    "Please upgrade your account inside the **Developer Identity Console** on our web platform "
+                    "to unlock instant resume parsing and cold-email automation!"
+                )
+            
+            await update.message.reply_text(msg, parse_mode="Markdown")
+        elif response.status_code == 404:
+            await update.message.reply_text(
+                f"❌ No Cypherdon account found with email `{email}`.\n\n"
+                "Please verify your email address or sign up on the Cypherdon web app first.",
+                parse_mode="Markdown"
+            )
+        else:
+            await update.message.reply_text(
+                "❌ Internal verification failed. Please try again later."
+            )
+    except Exception as e:
+        logger.error(f"Failed to link account: {e}")
+        await update.message.reply_text("❌ Network Error: Could not connect to Cypherdon verification engine.")
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Entry point for the bot."""
+    tier = await check_user_tier(context)
+    
+    if tier == "unlinked":
+        await update.message.reply_text(
+            "🤖 **Welcome to the Cypherdon Automation Bot!**\n\n"
+            "This bot automatically parses your resume, generates personalized cold emails using AI, "
+            "and queues them for automatic delivery.\n\n"
+            "⚠️ **Account Link Required**: To begin, please link your Cypherdon developer account:\n"
+            "Usage: `/link your_email@example.com`",
+            parse_mode="Markdown"
+        )
+        return ConversationHandler.END
+        
+    elif tier != "premium":
+        await update.message.reply_text(
+            "🤖 **Welcome to Cypherdon Automation!**\n\n"
+            "🔒 **Premium Access Required**: The automated cold mailing and resume parser is exclusive to Premium subscribers.\n\n"
+            "Please upgrade your account inside the **Developer Identity Console** on our web platform "
+            "to unlock all automation features!",
+            parse_mode="Markdown"
+        )
+        return ConversationHandler.END
+
     keyboard = [
         [InlineKeyboardButton("🚀 Start Automation", callback_data="start_automation")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        "Welcome to the Cypherdon Automation Bot! 🤖\n\n"
+        "Welcome to the Cypherdon Automation Bot! 🤖 🌟 (PREMIUM ACTIVE)\n\n"
         "I can help you parse your resume, generate personalized cold emails, "
         "and queue them for automatic sending.\n\n"
         "Type /cancel at any time to stop.",
@@ -59,6 +172,15 @@ async def prompt_resume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     query = update.callback_query
     await query.answer()
     
+    tier = await check_user_tier(context)
+    if tier != "premium":
+        await query.edit_message_text(
+            text="🔒 **Access Restricted**: You must have an active Premium Subscription to use the automation pipeline.\n"
+                 "Upgrade your account in the Developer Identity Console on our website.",
+            parse_mode="Markdown"
+        )
+        return ConversationHandler.END
+        
     await query.edit_message_text(text="Great! Please upload your Resume (PDF format).")
     return AWAITING_RESUME
 
@@ -298,6 +420,38 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Process cancelled. Type /start to try again. 👋")
     return ConversationHandler.END
 
+async def handle_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Uses Gemini to act as a conversational AI mentor for any text outside the automation flow."""
+    if not gemini_model:
+        await update.message.reply_text("AI Mentor is currently offline. Please configure the Gemini API.")
+        return
+
+    user_text = update.message.text
+    if not user_text:
+        return
+
+    # Send typing action to Telegram
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action='typing')
+    
+    try:
+        # Create a system prompt
+        system_prompt = (
+            "You are the Cypherdon AI Career Mentor. You help software engineers with interview prep, "
+            "resume reviews, learning paths, and career motivation. Be encouraging, concise, and professional."
+        )
+        
+        # Combine system prompt with user input (since Gemini 1.5 free tier doesn't support direct system instructions in generate_content simply without specific config, we prepend it for simplicity)
+        full_prompt = f"{system_prompt}\n\nUser: {user_text}\n\nMentor:"
+        
+        # Generate response
+        response = gemini_model.generate_content(full_prompt)
+        
+        # Send response back
+        await update.message.reply_text(response.text)
+    except Exception as e:
+        logger.error(f"Gemini API Error: {e}")
+        await update.message.reply_text("I'm having trouble thinking right now. Please try again later.")
+
 def main() -> None:
     """Run the bot."""
     token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -329,7 +483,11 @@ def main() -> None:
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
+    application.add_handler(CommandHandler("link", link_account))
     application.add_handler(conv_handler)
+    
+    # Add a fallback handler for any text messages not caught by the conversation handler
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_chat))
     
     logger.info("Telegram Bot is now ONLINE and polling for messages...")
     application.run_polling()

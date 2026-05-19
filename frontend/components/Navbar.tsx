@@ -4,18 +4,37 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import AvatarDropdown from "./AvatarDropdown";
+import { readCachedProfile, CachedProfile } from "@/lib/profileStorage";
 
 interface NavbarProps {
   isLoggedIn?: boolean;
   onLogout?: () => void;
   userName?: string;
+  avatarUrl?: string;
+  tier?: string;
 }
 
 export default function Navbar({
   isLoggedIn = false,
   onLogout,
   userName = "User",
+  avatarUrl,
+  tier,
 }: NavbarProps) {
+  // Use state to safely read from localStorage after hydration/mount
+  const [profile, setProfile] = React.useState<CachedProfile | null>(null);
+
+  React.useEffect(() => {
+    if (isLoggedIn) {
+      setProfile(readCachedProfile());
+    }
+  }, [isLoggedIn]);
+
+  // Determine final values
+  const finalUserName = userName !== "User" ? userName : (profile?.full_name || "User");
+  const finalAvatarUrl = avatarUrl || profile?.hero_image_url || undefined;
+  const finalTier = tier || profile?.tier || "free";
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.06] bg-[#06060e]/80 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
@@ -56,7 +75,9 @@ export default function Navbar({
                 Profile
               </Link>
               <AvatarDropdown
-                userName={userName}
+                userName={finalUserName}
+                avatarUrl={finalAvatarUrl}
+                tier={finalTier}
                 onLogout={onLogout || (() => {})}
               />
             </>

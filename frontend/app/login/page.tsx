@@ -8,6 +8,7 @@ import AuthCard from "@/components/auth/AuthCard";
 import InputField from "@/components/auth/InputField";
 import GradientButton from "@/components/auth/GradientButton";
 import { siteImages } from "@/lib/siteImages";
+import { clearCachedProfile, writeCachedProfile } from "@/lib/profileStorage";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function LoginPage() {
 
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user_id", data.user_id);
+      clearCachedProfile();
 
       // Check if profile is already complete
       try {
@@ -46,13 +48,25 @@ export default function LoginPage() {
           router.push("/complete-profile");
           return;
         }
+        if (profileRes.status === 401 || profileRes.status === 403) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user_id");
+          throw new Error("Session could not be verified. Please sign in again.");
+        }
+        if (!profileRes.ok) {
+          throw new Error("Could not load your profile.");
+        }
         const profile = await profileRes.json();
+        writeCachedProfile(profile);
         // If skills are empty, profile hasn't been completed yet
         if (!profile.skills || profile.skills.length === 0) {
           router.push("/complete-profile");
           return;
         }
-      } catch {
+      } catch (profileErr) {
+        if (profileErr instanceof Error && profileErr.message.includes("Session")) {
+          throw profileErr;
+        }
         // If profile check fails, still go to complete-profile
         router.push("/complete-profile");
         return;

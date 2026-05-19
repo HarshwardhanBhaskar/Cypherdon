@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends, Header, HTTPException
-from services.cloudinary_service import upload_resume
+from services.cloudinary_service import upload_resume, upload_image
 
 router = APIRouter()
 
@@ -21,4 +21,17 @@ async def handle_resume_upload(
     Uploads the PDF to Cloudinary and returns the secure URL.
     """
     secure_url = await upload_resume(user_id, file)
+    return {"url": secure_url}
+
+@router.post("/upload-image")
+async def handle_image_upload(
+    user_id: str = Form(...),
+    file: UploadFile = File(...),
+    dependencies: str = Depends(verify_service_token)
+):
+    """
+    Handles secure image uploads forwarded by the frontend.
+    Uploads the image to Cloudinary and returns the secure URL.
+    """
+    secure_url = await upload_image(user_id, file)
     return {"url": secure_url}

@@ -12,23 +12,29 @@ def register_user(user: UserRegisterRequest):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase not configured")
 
-    # Register via Supabase Auth (sends verification email if enabled)
-    res = supabase.auth.sign_up(
-        {"email": user.email, "password": user.password}
-    )
-    if not res.user:
-        raise HTTPException(status_code=400, detail="Registration failed")
+    try:
+        # Register via Supabase Auth (sends verification email if enabled)
+        res = supabase.auth.sign_up(
+            {"email": user.email, "password": user.password}
+        )
+        if not res.user:
+            raise HTTPException(status_code=400, detail="Registration failed")
 
-    user_id = res.user.id
+        user_id = res.user.id
 
-    # Store only the basics in the users table
-    insert_data = {
-        "id": user_id,
-        "email": user.email,
-        "full_name": user.full_name,
-    }
-    db_res = supabase.table("users").insert(insert_data).execute()
-    return {"message": "User registered. Check email to verify.", "data": db_res.data}
+        # Store only the basics in the users table
+        insert_data = {
+            "id": user_id,
+            "email": user.email,
+            "full_name": user.full_name,
+        }
+        db_res = supabase.table("users").insert(insert_data).execute()
+        return {"message": "User registered. Check email to verify.", "data": db_res.data}
+    except Exception as e:
+        error_msg = str(e)
+        if "rate limit" in error_msg.lower():
+            raise HTTPException(status_code=429, detail="Supabase rate limit exceeded. Please log in with your existing account or try again later.")
+        raise HTTPException(status_code=400, detail=error_msg)
 
 
 @router.post("/login", summary="Login user")
