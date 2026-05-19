@@ -64,3 +64,6 @@ pytest_cache/
 *.sql
 *.dump
 *.bak
+
+# ---- System Documentation Reports ----
+Cypherdon_System_Architecture_and_Documentation_Report.pdf
