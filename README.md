@@ -50,7 +50,7 @@ flowchart TD
 
     %% Define Gateway and Core Services
     subgraph BackendLayer ["Core Microservices Suite"]
-        SpringBoot["Spring Boot Core Engine<br/>(Port: 8080)<br/>- Core JPA Repositories<br/>- Asynchronous ExecutorService<br/>- JWT Authorization Filter"]
+        SpringBoot["Spring Boot Core Engine<br/>(Port: 8080)<br/>- Core JPA Repositories<br/>- Asynchronous ExecutorService<br/>- TenantContext Filter<br/>- Double-Entry Ledger Wallet"]
         FastAPI["FastAPI AI and Scoring Engine<br/>(Port: 8000)<br/>- Resume Parsing - PyMuPDF<br/>- AI Email Generation - GPT-4o<br/>- Public Portfolio Gate"]
         TGBot["Telegram Automation Agent<br/>(python-telegram-bot)<br/>- Button-Driven User Flow<br/>- Gemini-2.5 Coach Fallback"]
     end
@@ -64,13 +64,14 @@ flowchart TD
     UI -- "1. Authenticates & Manages Profiles" --> Supabase
     UI -- "2. REST Operations (JWT Authorized)" --> SpringBoot
     TGClient -- "3. Initiates Session & Interacts" --> TGBot
+    UI -- "4. WebSockets (Live Vetting Progress)" --> SpringBoot
 
     %% Core Orchestration Handshakes
-    SpringBoot -- "Reads / Writes Metadata" --> Supabase
-    TGBot -- "4. Secure Pair Request (/link)" --> FastAPI
-    FastAPI -- "5. Service Handshake (X-Internal-Secret)" --> Supabase
-    TGBot -- "6. Enqueue Cold Email Task" --> SpringBoot
-    SpringBoot -- "7. Proxy Heavy Analysis Tasks" --> FastAPI
+    SpringBoot -- "Enforces Tenant RLS & Ledger Transactions" --> Supabase
+    TGBot -- "5. Secure Pair Request (/link)" --> FastAPI
+    FastAPI -- "6. Service Handshake (X-Internal-Secret)" --> Supabase
+    TGBot -- "7. Enqueue Cold Email Task" --> SpringBoot
+    SpringBoot -- "8. Proxy Heavy Analysis Tasks" --> FastAPI
 
     %% Formatting Nodes
     style SpringBoot fill:#1b361b,stroke:#6DB33F,stroke-width:2px,color:#fff
