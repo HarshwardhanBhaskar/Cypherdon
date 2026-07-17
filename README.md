@@ -276,6 +276,22 @@ python -m bot.main
 ```
 *Bot active and polling Telegram servers for incoming web-pairs!*
 
+## 🚀 B2B SaaS Enterprise Upgrade (v2.0)
+
+We have recently upgraded Cypherdon into a fully featured **B2B SaaS Recruitment and Vetting Platform**. This version introduces three critical enterprise architecture patterns:
+
+### 1. Logical Multi-Tenant Isolation
+* **Scope**: All workspace entities (`users`, `vetting_tasks`, `ledger_entries`) are logically separated by a unique `tenant_id`.
+* **Mechanism**: A custom `TenantFilter` interceptor parses the tenant context on every request, mapping it to a `ThreadLocal` `TenantContext` to enforce strict corporate data boundaries.
+
+### 2. Transaction-Safe Credits Ledger Wallet
+* **Bookkeeping**: All billing adjustments are stored as immutable `LedgerEntry` items (positive for top-ups, negative for usage). Current balance is verified by taking the sum of the entries.
+* **Concurrency Protection**: The ledger check-and-deduct transactions are `synchronized` and fully transactional to prevent race conditions or double-spending, verified by parallel JUnit load tests.
+
+### 3. Asynchronous Pipeline & Real-Time WebSockets
+* **Queue**: Heavy resume processing is offloaded to background Spring `@Async` threads to prevent client thread blockages.
+* **WebSockets**: A custom native WebSocket handler broadcasts evaluation progress (`QUEUED` -> `PROCESSING` -> `COMPLETED`) in real time straight to the Next.js frontend client.
+
 ---
 
 ## 🤝 Contribution Guidelines

@@ -55,6 +55,33 @@ public class AiIntegrationService {
         }
     }
 
+    @CircuitBreaker(name = "aiEngine", fallbackMethod = "fallbackAnalysisBytes")
+    @Retry(name = "aiEngine")
+    public Mono<String> analyzeResumeBytes(byte[] fileBytes, String fileName, String targetRole) {
+        MultipartBodyBuilder builder = new MultipartBodyBuilder();
+        builder.part("file", new ByteArrayResource(fileBytes) {
+            @Override
+            public String getFilename() {
+                return fileName != null ? fileName : "resume.pdf";
+            }
+        });
+        builder.part("target_role", targetRole);
+
+        logger.info("Forwarding async resume bytes analysis to FastAPI...");
+
+        return webClient.post()
+                .uri("/api/resume/analyze")
+                .header("X-Internal-Secret", System.getenv().getOrDefault("INTERNAL_SERVICE_KEY", "cypherdon_internal_123"))
+                .body(BodyInserters.fromMultipartData(builder.build()))
+                .retrieve()
+                .bodyToMono(String.class);
+    }
+
+    public Mono<String> fallbackAnalysisBytes(byte[] fileBytes, String fileName, String targetRole, Throwable t) {
+        logger.error("AI Engine Circuit Breaker Open for Bytes: {}", t.getMessage());
+        return Mono.just("{\"score\": 0, \"error\": \"AI Engine is currently overloaded or unavailable. Circuit breaker activated.\", \"missing_skills\": [], \"suggestions\": []}");
+    }
+
     public Mono<String> fallbackAnalysis(MultipartFile file, String targetRole, Throwable t) {
         logger.error("AI Engine Circuit Breaker Open / Retries Exhausted: {}", t.getMessage());
         return Mono.just("{\"score\": 0, \"error\": \"AI Engine is currently overloaded or unavailable. Circuit breaker activated.\", \"missing_skills\": [], \"suggestions\": []}");

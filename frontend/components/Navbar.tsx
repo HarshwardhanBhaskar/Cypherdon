@@ -69,6 +69,12 @@ export default function Navbar({
                 Dashboard
               </Link>
               <Link
+                href="/dashboard/recruiter"
+                className="text-sm text-slate-400 hover:text-indigo-300 transition-colors no-underline hidden sm:block cursor-pointer"
+              >
+                Recruiter Portal
+              </Link>
+              <Link
                 href="/profile"
                 className="text-sm text-slate-400 hover:text-indigo-300 transition-colors no-underline hidden sm:block cursor-pointer"
               >

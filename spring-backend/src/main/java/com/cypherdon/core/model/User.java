@@ -18,6 +18,13 @@ public class User {
     @Id
     private UUID id; // Matches auth.users UUID in Supabase
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
+
+    @Column(name = "role")
+    private String role = "CANDIDATE";
+
     private String email;
 
     @Column(name = "full_name")

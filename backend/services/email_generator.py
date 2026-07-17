@@ -19,13 +19,22 @@ logger = logging.getLogger("email_generator")
 _client = None
 
 def _get_client():
-    """Lazily initializes the async OpenAI client."""
+    """Lazily initializes the async OpenAI client, supporting OpenRouter dynamically."""
     global _client
     if _client is None:
         key = os.getenv("OPENAI_API_KEY")
         if not key:
             return None
-        _client = AsyncOpenAI(api_key=key, timeout=15.0, max_retries=2)
+        if key.startswith("sk-or-"):
+            logger.info("Initializing OpenAI client with OpenRouter base URL")
+            _client = AsyncOpenAI(
+                api_key=key,
+                base_url="https://openrouter.ai/api/v1",
+                timeout=15.0,
+                max_retries=2
+            )
+        else:
+            _client = AsyncOpenAI(api_key=key, timeout=15.0, max_retries=2)
     return _client
 
 
@@ -97,8 +106,14 @@ async def generate_cold_email(request: EmailGenerationRequest) -> EmailGeneratio
 
     # 4. Call OpenAI (async — non-blocking)
     try:
+        key = os.getenv("OPENAI_API_KEY", "")
+        default_model = "openai/gpt-4o-mini" if key.startswith("sk-or-") else "gpt-4o-mini"
+        model_name = os.getenv("LLM_MODEL", default_model)
+
+        logger.info("Using LLM model: %s", model_name)
+
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=model_name,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system_prompt},

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { readCachedProfile } from "@/lib/profileStorage";
 import { siteImages } from "@/lib/siteImages";
 import { 
@@ -519,8 +518,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Footer component */}
-      <Footer />
     </div>
   );
 }

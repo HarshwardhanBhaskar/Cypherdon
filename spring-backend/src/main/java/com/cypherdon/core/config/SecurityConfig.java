@@ -25,6 +25,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // Public endpoints
+                .requestMatchers("/ws/**").permitAll() // WebSocket endpoints
+                .requestMatchers("/api/vetting/**").permitAll() // Vetting endpoint permissions
+                .requestMatchers("/api/wallet/**").permitAll() // Wallet endpoint permissions
                 // Internal routes (/api/emails/queue, /api/ai/**) are secured by InternalApiKeyFilter
                 .anyRequest().authenticated() // All other endpoints require a valid token
             )
