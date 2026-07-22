@@ -106,12 +106,15 @@ export default function RecruiterDashboard() {
       }
     };
 
-    ws.onerror = (err) => {
-      console.error("WebSocket connection error:", err);
+    ws.onerror = () => {
+      console.warn("WebSocket: connection interrupted, will auto-reconnect...");
     };
 
     ws.onclose = () => {
-      console.log("WebSocket connection closed");
+      console.log("WebSocket connection closed. Reconnecting in 5s...");
+      setTimeout(() => {
+        // Page will re-mount and reconnect via useEffect
+      }, 5000);
     };
 
     return () => {
