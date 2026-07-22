@@ -671,7 +671,7 @@ export default function PortfolioPage() {
             </svg>
           </a>
           <a 
-            href="https://instagram.com" 
+            href="https://www.instagram.com/hb.technologies_official?igsh=d2JzZWtud2IyMzlv" 
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-[#00e676] hover:scale-115 transition-all duration-200"
