@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 import logging
 from datetime import datetime
-from routers import auth, jobs, applications, resume, profile, matching, emails, upload
+from routers import auth, jobs, applications, resume, profile, matching, emails, upload, agent
 from prometheus_fastapi_instrumentator import Instrumentator
 
 logging.basicConfig(
@@ -52,6 +52,7 @@ app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])
 app.include_router(matching.router, prefix="/api/match-jobs", tags=["Matching"])
 app.include_router(emails.router, prefix="/api/emails", tags=["Emails"])
 app.include_router(upload.router, prefix="/api", tags=["Uploads"])
+app.include_router(agent.router, prefix="/api/agent", tags=["Agentic AI"])
 
 
 @app.get("/", tags=["Health"])

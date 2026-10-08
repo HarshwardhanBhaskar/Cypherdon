@@ -69,6 +69,12 @@ export default function Navbar({
                 Dashboard
               </Link>
               <Link
+                href="/dashboard/agent"
+                className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors no-underline hidden sm:block cursor-pointer font-medium flex items-center gap-1"
+              >
+                <span>🤖 AI Career Agent</span>
+              </Link>
+              <Link
                 href="/dashboard/recruiter"
                 className="text-sm text-slate-400 hover:text-indigo-300 transition-colors no-underline hidden sm:block cursor-pointer"
               >
