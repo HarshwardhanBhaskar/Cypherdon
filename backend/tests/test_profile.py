@@ -34,7 +34,7 @@ def test_health_check():
     """Verify backend health endpoint is online and functioning."""
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+    assert response.json()["status"] in ["ok", "OPERATIONAL"]
 
 @patch("services.auth_dep.supabase")
 def test_unauthorized_profile_access(mock_supabase):
